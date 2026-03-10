@@ -15,10 +15,7 @@ function GlobalEnemySlots.Init(GUI)
     local frame = Instance.new("Frame")
     frame.Name = "GlobalEnemySlots"
     frame.BackgroundTransparency = 1
-    
-    
-    
-    frame.Position = UDim2.new(0.5, 0, 1, -125) 
+    frame.Position = UDim2.new(0.5, 0, 1, -95) 
     frame.AnchorPoint = Vector2.new(0.5, 1)
     frame.Size = UDim2.new(0, 350, 0, 120)
     frame.Visible = false
@@ -88,8 +85,13 @@ function GlobalEnemySlots.Update(Settings, Utils, Aimbot)
         return
     end
     
+    -- Clone settings and disable visibility check for UI target finding
+    local uiSettings = {}
+    for k, v in pairs(Settings) do uiSettings[k] = v end
+    uiSettings.visibleCheckEnabled = false
     
-    local target = Aimbot.FindTarget(Settings, Utils)
+    -- Use Aimbot.FindTarget to get what the user is looking at (ignoring walls)
+    local target = Aimbot.FindTarget(uiSettings, Utils)
     if not target or not target.player then
         GlobalEnemySlots.Frame.Visible = false
         return
