@@ -1,6 +1,7 @@
 local Settings = {
     
     aimbotEnabled = false,
+    multiPointEnabled = false,
     teamCheckEnabled = true,
     visibleCheckEnabled = true,
     noRecoilEnabled = false,

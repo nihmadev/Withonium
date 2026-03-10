@@ -348,6 +348,12 @@ function GUI.Init(Settings, Utils, UnloadCallback, ConfigManager, ItemSpawner)
         Flag = "aimbotEnabled",
         Callback = function(Value) Settings.aimbotEnabled = Value end
     })
+    GUI.Elements.Toggles["multiPointEnabled"] = AimbotMain:CreateToggle({
+        Name = "MultiPoint",
+        CurrentValue = Settings.multiPointEnabled,
+        Flag = "multiPointEnabled",
+        Callback = function(Value) Settings.multiPointEnabled = Value end
+    })
     GUI.Elements.Toggles["teamCheckEnabled"] = AimbotMain:CreateToggle({
         Name = "Team Check",
         CurrentValue = Settings.teamCheckEnabled,

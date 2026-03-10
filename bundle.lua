@@ -1724,6 +1724,12 @@ function GUI.Init(Settings, Utils, UnloadCallback, ConfigManager, ItemSpawner)
         Flag = "aimbotEnabled",
         Callback = function(Value) Settings.aimbotEnabled = Value end
     })
+    GUI.Elements.Toggles["multiPointEnabled"] = AimbotMain:CreateToggle({
+        Name = "MultiPoint",
+        CurrentValue = Settings.multiPointEnabled,
+        Flag = "multiPointEnabled",
+        Callback = function(Value) Settings.multiPointEnabled = Value end
+    })
     GUI.Elements.Toggles["teamCheckEnabled"] = AimbotMain:CreateToggle({
         Name = "Team Check",
         CurrentValue = Settings.teamCheckEnabled,
@@ -3007,6 +3013,7 @@ _modules["modules/Settings"] = function()
 local Settings = {
     
     aimbotEnabled = false,
+    multiPointEnabled = false,
     teamCheckEnabled = true,
     visibleCheckEnabled = true,
     noRecoilEnabled = false,
@@ -4312,7 +4319,7 @@ function Hitboxes.UpdateHitboxes(Aimbot, Settings, Utils, ESP)
         if not rootPart then continue end
         
         local distance = (rootPart.Position - camPos).Magnitude
-        if distance > 2500 then 
+        if distance > 2500 then
             continue 
         end
 
@@ -4935,7 +4942,32 @@ function Targeting.FindTarget(Settings, Utils, Aimbot)
                     else
                         isVisible = Utils.isPartVisible(targetObj, character)
                         
-                        if not isVisible and Settings.targetPart ~= "Torso" then
+                        if not isVisible and Settings.multiPointEnabled then
+                            local priorities = {"Head", "Torso", "Legs"}
+                            for _, pName in ipairs(priorities) do
+                                if pName ~= Settings.targetPart then
+                                    local p = Utils.getBodyPart(character, pName)
+                                    if p and Utils.isPartVisible(p, character) then
+                                        isVisible = true
+                                        bestPart = p
+                                        break
+                                    end
+                                end
+                            end
+                            
+                            if not isVisible then
+                                local allParts = Utils.getAllBodyParts(character, "Any")
+                                for _, p in ipairs(allParts) do
+                                    if p:IsA("BasePart") and p.Transparency < 1 and Utils.isPartVisible(p, character) then
+                                        isVisible = true
+                                        bestPart = p
+                                        break
+                                    end
+                                end
+                            end
+                        end
+                        
+                        if not isVisible and not Settings.multiPointEnabled and Settings.targetPart ~= "Torso" then
                             
                             local torso = Utils.getBodyPart(character, "Torso")
                             if torso and Utils.isPartVisible(torso, character) then

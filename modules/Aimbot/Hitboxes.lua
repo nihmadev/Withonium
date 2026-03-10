@@ -12,7 +12,7 @@ function Hitboxes.UpdateHitboxes(Aimbot, Settings, Utils, ESP)
     if not Settings or not ESP then return end
     
     local now = tick()
-    -- Делаем обновление чаще, чтобы ловить игроков сразу после спавна
+    
     if now - Hitboxes.lastHitboxUpdate < 0.1 then return end 
     Hitboxes.lastHitboxUpdate = now
     
@@ -56,7 +56,7 @@ function Hitboxes.UpdateHitboxes(Aimbot, Settings, Utils, ESP)
         if player == LocalPlayer then continue end
         
         local character = Utils.getCharacter(player)
-        -- Если персонаж только заспавнился, он может быть не виден в первом кадре
+        
         if not character then continue end
         
         local rootPart = character:FindFirstChild("HumanoidRootPart") 
@@ -68,7 +68,7 @@ function Hitboxes.UpdateHitboxes(Aimbot, Settings, Utils, ESP)
         if not rootPart then continue end
         
         local distance = (rootPart.Position - camPos).Magnitude
-        if distance > 2500 then -- Увеличил до 2500
+        if distance > 2500 then
             continue 
         end
 
@@ -98,22 +98,22 @@ function Hitboxes.UpdateHitboxes(Aimbot, Settings, Utils, ESP)
                 }
             end
             
-            -- Применяем изменения
+            
             if part.Size ~= targetSize then
                 part.Size = targetSize
                 part.CanCollide = false 
                 part.CanTouch = true 
                 part.Massless = true
-                -- УБРАЛ ИЗМЕНЕНИЕ ФОРМЫ (Shape = Ball), теперь форма оригинальная
+                
             end
 
-            -- Визуализация (Только скин)
+            
             if Settings.hitboxExpanderShow then
                 if part.Transparency ~= 0.8 then
                     part.Transparency = 0.8
                 end
                 
-                -- Чистим старые объекты
+                
                 local visual = part:FindFirstChild("HitboxVisual")
                 if visual then visual:Destroy() end
             else
@@ -125,7 +125,7 @@ function Hitboxes.UpdateHitboxes(Aimbot, Settings, Utils, ESP)
         end
     end
     
-    -- Инкрементальная очистка (ускорил)
+    
     local partsInCache = {}
     local k = 0
     for part, _ in pairs(Hitboxes.OriginalProperties) do
@@ -133,7 +133,7 @@ function Hitboxes.UpdateHitboxes(Aimbot, Settings, Utils, ESP)
         partsInCache[k] = part
     end
     
-    local cleanupBatchSize = 20 -- Увеличил размер пачки
+    local cleanupBatchSize = 20 
     local startIndex = Hitboxes.CleanupIndex or 1
     if startIndex > #partsInCache then startIndex = 1 end
     

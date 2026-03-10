@@ -94,7 +94,32 @@ function Targeting.FindTarget(Settings, Utils, Aimbot)
                     else
                         isVisible = Utils.isPartVisible(targetObj, character)
                         
-                        if not isVisible and Settings.targetPart ~= "Torso" then
+                        if not isVisible and Settings.multiPointEnabled then
+                            local priorities = {"Head", "Torso", "Legs"}
+                            for _, pName in ipairs(priorities) do
+                                if pName ~= Settings.targetPart then
+                                    local p = Utils.getBodyPart(character, pName)
+                                    if p and Utils.isPartVisible(p, character) then
+                                        isVisible = true
+                                        bestPart = p
+                                        break
+                                    end
+                                end
+                            end
+                            
+                            if not isVisible then
+                                local allParts = Utils.getAllBodyParts(character, "Any")
+                                for _, p in ipairs(allParts) do
+                                    if p:IsA("BasePart") and p.Transparency < 1 and Utils.isPartVisible(p, character) then
+                                        isVisible = true
+                                        bestPart = p
+                                        break
+                                    end
+                                end
+                            end
+                        end
+                        
+                        if not isVisible and not Settings.multiPointEnabled and Settings.targetPart ~= "Torso" then
                             
                             local torso = Utils.getBodyPart(character, "Torso")
                             if torso and Utils.isPartVisible(torso, character) then
