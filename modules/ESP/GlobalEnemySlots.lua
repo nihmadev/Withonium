@@ -79,78 +79,24 @@ function GlobalEnemySlots.Init(GUI)
     GlobalEnemySlots.Initialized = true
 end
 
-function GlobalEnemySlots.Update(Settings, Utils, Aimbot)
+function GlobalEnemySlots.Update(Settings, player, character, items)
     if not Settings.espEnabled or not Settings.espEnemySlots or not GlobalEnemySlots.Frame then
         if GlobalEnemySlots.Frame then GlobalEnemySlots.Frame.Visible = false end
         return
     end
     
-    -- Find player under cursor (ignoring FOV and walls)
-    local bestTargetPlayer = nil
-    local minDistance = 200 -- Max screen distance for target (lenient)
-    local camera = workspace.CurrentCamera
-    local screenCenter = camera and camera.ViewportSize / 2 or Vector2.new(0, 0)
-    
-    local allPlayers = Players:GetPlayers()
-    for i = 1, #allPlayers do
-        local player = allPlayers[i]
-        if player == LocalPlayer then continue end
-        
-        local character = Utils.getCharacter(player)
-        if not character then continue end
-        
-        local humanoid = character:FindFirstChild("Humanoid")
-        local rootPart = character:FindFirstChild("HumanoidRootPart")
-        
-        if humanoid and humanoid.Health > 0 and rootPart then
-            local pos, onScreen = camera:WorldToViewportPoint(rootPart.Position)
-            if onScreen then
-                local screenDist = (Vector2.new(pos.X, pos.Y) - screenCenter).Magnitude
-                if screenDist < minDistance then
-                    minDistance = screenDist
-                    bestTargetPlayer = player
-                end
-            end
-        end
-    end
-    
-    if not bestTargetPlayer then
+    if not player or not character or not items then
         GlobalEnemySlots.Frame.Visible = false
-        return
-    end
-    
-    local player = bestTargetPlayer
-    local character = Utils.getCharacter(player)
-    if not character then
-        GlobalEnemySlots.Frame.Visible = false
+        GlobalEnemySlots.CurrentPlayer = nil
         return
     end
     
     GlobalEnemySlots.Frame.Visible = true
+    GlobalEnemySlots.CurrentPlayer = player
     
     local now = tick()
-    if now - GlobalEnemySlots.LastUpdate < 0.2 then return end 
+    if now - GlobalEnemySlots.LastUpdate < 0.1 then return end 
     GlobalEnemySlots.LastUpdate = now
-    
-    local items = {}
-    
-    
-    local equipped = character:FindFirstChildWhichIsA("Tool")
-    if equipped then
-        table.insert(items, equipped)
-    end
-    
-    
-    local backpack = player:FindFirstChild("Backpack")
-    if backpack then
-        local children = backpack:GetChildren()
-        for i = 1, #children do
-            local item = children[i]
-            if item:IsA("Tool") and item ~= equipped and #items < 12 then
-                table.insert(items, item)
-            end
-        end
-    end
     
     for i = 1, 12 do
         local slot = GlobalEnemySlots.Slots[i]

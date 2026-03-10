@@ -1192,13 +1192,14 @@ function ESP.Update(Settings, deltaTime, Utils, Aimbot)
     if now - ESP.LastUpdate < 0.033 then return end 
     ESP.LastUpdate = now
 
-    
-    if GlobalEnemySlots and Aimbot then
-        GlobalEnemySlots.Update(Settings, Utils, Aimbot)
-    end
-
     local Camera = workspace.CurrentCamera
     if not Camera then return end
+    
+    local screenCenter = Utils.getScreenCenter()
+    local bestTargetPlayer = nil
+    local bestTargetChar = nil
+    local bestTargetItems = nil
+    local minScreenDist = 250 
     
     local activeHighlights = 0
     local maxHighlights = 15 
@@ -1231,7 +1232,7 @@ function ESP.Update(Settings, deltaTime, Utils, Aimbot)
         if player == LocalPlayer then continue end
         
         local character = Utils.getCharacter(player)
-        local rootPart = character and (character:FindFirstChild("HumanoidRootPart") or character:FindFirstChild("Torso") or character:FindFirstChild("UpperTorso") or character:FindFirstChild("Middle"))
+        local rootPart = character and (character:FindFirstChild("HumanoidRootPart") or character:FindFirstChild("Torso") or character:FindFirstChild("UpperTorso") or character:FindFirstChild("Middle") or character:FindFirstChild("Head"))
         
         local dist = 999999
         if rootPart then
@@ -1292,27 +1293,6 @@ function ESP.Update(Settings, deltaTime, Utils, Aimbot)
                     isTeammate = true
                 end
             end
-            
-            
-            if not isTeammate and character and LocalPlayer.Character then
-                local function getMainColor(char)
-                    local torso = char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso")
-                    if torso and torso:IsA("BasePart") then
-                        return torso.Color
-                    end
-                    return nil
-                end
-                
-                local playerColor = getMainColor(character)
-                local localColor = getMainColor(LocalPlayer.Character)
-                
-                if playerColor and localColor then
-                    local colorDiff = (playerColor.R - localColor.R)^2 + (playerColor.G - localColor.G)^2 + (playerColor.B - localColor.B)^2
-                    if colorDiff < 0.01 then 
-                        isTeammate = true
-                    end
-                end
-            end
         end
         
         
@@ -1366,6 +1346,40 @@ function ESP.Update(Settings, deltaTime, Utils, Aimbot)
 
         
         Healthbars.Update(player, character, rootPart, humanoid, Settings, isWithinDistance)
+        
+        
+        if Settings.espEnemySlots and character and rootPart then
+            local pos, onScreen = Camera:WorldToViewportPoint(rootPart.Position)
+            if onScreen and pos.Z > 0 then
+                local screenDist = (Vector2.new(pos.X, pos.Y) - screenCenter).Magnitude
+                if screenDist < minScreenDist then
+                    minScreenDist = screenDist
+                    bestTargetPlayer = player
+                    bestTargetChar = character
+                    
+                    
+                    local items = {}
+                    local equipped = character:FindFirstChildWhichIsA("Tool")
+                    if equipped then table.insert(items, equipped) end
+                    local backpack = player:FindFirstChild("Backpack")
+                    if backpack then
+                        local children = backpack:GetChildren()
+                        for j = 1, #children do
+                            local item = children[j]
+                            if item:IsA("Tool") and item ~= equipped and #items < 12 then
+                                table.insert(items, item)
+                            end
+                        end
+                    end
+                    bestTargetItems = items
+                end
+            end
+        end
+    end
+    
+    
+    if GlobalEnemySlots then
+        GlobalEnemySlots.Update(Settings, bestTargetPlayer, bestTargetChar, bestTargetItems)
     end
 end
 
@@ -3161,29 +3175,7 @@ Utils.SharedRaycastParams.IgnoreWater = true
 
 function Utils.getCharacter(player)
     if not player then return nil end
-    
-    
     if player.Character then return player.Character end
-    
-    
-    local placeId = game.PlaceId
-    if placeId == 13253735473 or placeId == 8130299583 then
-        local renv = getrenv and getrenv()
-        if renv and renv._G then
-            if renv._G.Character and renv._G.Character.character then
-                if player == Players.LocalPlayer then
-                    return renv._G.Character.character
-                end
-            end
-        end
-        
-        local ignorePlayers = workspace:FindFirstChild("Ignore") and workspace.Ignore:FindFirstChild("Players")
-        if ignorePlayers then
-            local char = ignorePlayers:FindFirstChild(player.Name)
-            if char and char:IsA("Model") then return char end
-        end
-    end
-
     
     
     local char = workspace:FindFirstChild(player.Name)
@@ -3191,11 +3183,13 @@ function Utils.getCharacter(player)
         return char
     end
     
-    
-    for _, folderName in ipairs({"Players", "Characters", "Entities", "Living"}) do
+    for _, folderName in ipairs({"Players", "Characters", "Entities", "Living", "Ignore"}) do
         local folder = workspace:FindFirstChild(folderName)
         if folder then
             local c = folder:FindFirstChild(player.Name)
+            if not c and folderName == "Ignore" and folder:FindFirstChild("Players") then
+                c = folder.Players:FindFirstChild(player.Name)
+            end
             if c and c:IsA("Model") then return c end
         end
     end
@@ -5289,78 +5283,24 @@ function GlobalEnemySlots.Init(GUI)
     GlobalEnemySlots.Initialized = true
 end
 
-function GlobalEnemySlots.Update(Settings, Utils, Aimbot)
+function GlobalEnemySlots.Update(Settings, player, character, items)
     if not Settings.espEnabled or not Settings.espEnemySlots or not GlobalEnemySlots.Frame then
         if GlobalEnemySlots.Frame then GlobalEnemySlots.Frame.Visible = false end
         return
     end
     
-    
-    local bestTargetPlayer = nil
-    local minDistance = 200 
-    local camera = workspace.CurrentCamera
-    local screenCenter = camera and camera.ViewportSize / 2 or Vector2.new(0, 0)
-    
-    local allPlayers = Players:GetPlayers()
-    for i = 1, #allPlayers do
-        local player = allPlayers[i]
-        if player == LocalPlayer then continue end
-        
-        local character = Utils.getCharacter(player)
-        if not character then continue end
-        
-        local humanoid = character:FindFirstChild("Humanoid")
-        local rootPart = character:FindFirstChild("HumanoidRootPart")
-        
-        if humanoid and humanoid.Health > 0 and rootPart then
-            local pos, onScreen = camera:WorldToViewportPoint(rootPart.Position)
-            if onScreen then
-                local screenDist = (Vector2.new(pos.X, pos.Y) - screenCenter).Magnitude
-                if screenDist < minDistance then
-                    minDistance = screenDist
-                    bestTargetPlayer = player
-                end
-            end
-        end
-    end
-    
-    if not bestTargetPlayer then
+    if not player or not character or not items then
         GlobalEnemySlots.Frame.Visible = false
-        return
-    end
-    
-    local player = bestTargetPlayer
-    local character = Utils.getCharacter(player)
-    if not character then
-        GlobalEnemySlots.Frame.Visible = false
+        GlobalEnemySlots.CurrentPlayer = nil
         return
     end
     
     GlobalEnemySlots.Frame.Visible = true
+    GlobalEnemySlots.CurrentPlayer = player
     
     local now = tick()
-    if now - GlobalEnemySlots.LastUpdate < 0.2 then return end 
+    if now - GlobalEnemySlots.LastUpdate < 0.1 then return end 
     GlobalEnemySlots.LastUpdate = now
-    
-    local items = {}
-    
-    
-    local equipped = character:FindFirstChildWhichIsA("Tool")
-    if equipped then
-        table.insert(items, equipped)
-    end
-    
-    
-    local backpack = player:FindFirstChild("Backpack")
-    if backpack then
-        local children = backpack:GetChildren()
-        for i = 1, #children do
-            local item = children[i]
-            if item:IsA("Tool") and item ~= equipped and #items < 12 then
-                table.insert(items, item)
-            end
-        end
-    end
     
     for i = 1, 12 do
         local slot = GlobalEnemySlots.Slots[i]

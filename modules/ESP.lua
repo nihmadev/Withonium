@@ -41,13 +41,14 @@ function ESP.Update(Settings, deltaTime, Utils, Aimbot)
     if now - ESP.LastUpdate < 0.033 then return end 
     ESP.LastUpdate = now
 
-    
-    if GlobalEnemySlots and Aimbot then
-        GlobalEnemySlots.Update(Settings, Utils, Aimbot)
-    end
-
     local Camera = workspace.CurrentCamera
     if not Camera then return end
+    
+    local screenCenter = Utils.getScreenCenter()
+    local bestTargetPlayer = nil
+    local bestTargetChar = nil
+    local bestTargetItems = nil
+    local minScreenDist = 250 
     
     local activeHighlights = 0
     local maxHighlights = 15 
@@ -80,7 +81,7 @@ function ESP.Update(Settings, deltaTime, Utils, Aimbot)
         if player == LocalPlayer then continue end
         
         local character = Utils.getCharacter(player)
-        local rootPart = character and (character:FindFirstChild("HumanoidRootPart") or character:FindFirstChild("Torso") or character:FindFirstChild("UpperTorso") or character:FindFirstChild("Middle"))
+        local rootPart = character and (character:FindFirstChild("HumanoidRootPart") or character:FindFirstChild("Torso") or character:FindFirstChild("UpperTorso") or character:FindFirstChild("Middle") or character:FindFirstChild("Head"))
         
         local dist = 999999
         if rootPart then
@@ -141,27 +142,6 @@ function ESP.Update(Settings, deltaTime, Utils, Aimbot)
                     isTeammate = true
                 end
             end
-            
-            
-            if not isTeammate and character and LocalPlayer.Character then
-                local function getMainColor(char)
-                    local torso = char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso")
-                    if torso and torso:IsA("BasePart") then
-                        return torso.Color
-                    end
-                    return nil
-                end
-                
-                local playerColor = getMainColor(character)
-                local localColor = getMainColor(LocalPlayer.Character)
-                
-                if playerColor and localColor then
-                    local colorDiff = (playerColor.R - localColor.R)^2 + (playerColor.G - localColor.G)^2 + (playerColor.B - localColor.B)^2
-                    if colorDiff < 0.01 then 
-                        isTeammate = true
-                    end
-                end
-            end
         end
         
         
@@ -215,6 +195,40 @@ function ESP.Update(Settings, deltaTime, Utils, Aimbot)
 
         
         Healthbars.Update(player, character, rootPart, humanoid, Settings, isWithinDistance)
+        
+        
+        if Settings.espEnemySlots and character and rootPart then
+            local pos, onScreen = Camera:WorldToViewportPoint(rootPart.Position)
+            if onScreen and pos.Z > 0 then
+                local screenDist = (Vector2.new(pos.X, pos.Y) - screenCenter).Magnitude
+                if screenDist < minScreenDist then
+                    minScreenDist = screenDist
+                    bestTargetPlayer = player
+                    bestTargetChar = character
+                    
+                    
+                    local items = {}
+                    local equipped = character:FindFirstChildWhichIsA("Tool")
+                    if equipped then table.insert(items, equipped) end
+                    local backpack = player:FindFirstChild("Backpack")
+                    if backpack then
+                        local children = backpack:GetChildren()
+                        for j = 1, #children do
+                            local item = children[j]
+                            if item:IsA("Tool") and item ~= equipped and #items < 12 then
+                                table.insert(items, item)
+                            end
+                        end
+                    end
+                    bestTargetItems = items
+                end
+            end
+        end
+    end
+    
+    
+    if GlobalEnemySlots then
+        GlobalEnemySlots.Update(Settings, bestTargetPlayer, bestTargetChar, bestTargetItems)
     end
 end
 

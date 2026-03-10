@@ -14,29 +14,7 @@ Utils.SharedRaycastParams.IgnoreWater = true
 
 function Utils.getCharacter(player)
     if not player then return nil end
-    
-    
     if player.Character then return player.Character end
-    
-    
-    local placeId = game.PlaceId
-    if placeId == 13253735473 or placeId == 8130299583 then
-        local renv = getrenv and getrenv()
-        if renv and renv._G then
-            if renv._G.Character and renv._G.Character.character then
-                if player == Players.LocalPlayer then
-                    return renv._G.Character.character
-                end
-            end
-        end
-        
-        local ignorePlayers = workspace:FindFirstChild("Ignore") and workspace.Ignore:FindFirstChild("Players")
-        if ignorePlayers then
-            local char = ignorePlayers:FindFirstChild(player.Name)
-            if char and char:IsA("Model") then return char end
-        end
-    end
-
     
     
     local char = workspace:FindFirstChild(player.Name)
@@ -44,11 +22,13 @@ function Utils.getCharacter(player)
         return char
     end
     
-    
-    for _, folderName in ipairs({"Players", "Characters", "Entities", "Living"}) do
+    for _, folderName in ipairs({"Players", "Characters", "Entities", "Living", "Ignore"}) do
         local folder = workspace:FindFirstChild(folderName)
         if folder then
             local c = folder:FindFirstChild(player.Name)
+            if not c and folderName == "Ignore" and folder:FindFirstChild("Players") then
+                c = folder.Players:FindFirstChild(player.Name)
+            end
             if c and c:IsA("Model") then return c end
         end
     end
