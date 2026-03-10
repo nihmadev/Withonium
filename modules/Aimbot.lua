@@ -3,10 +3,10 @@ local LocalPlayer = Players.LocalPlayer
 local UserInputService = game:GetService("UserInputService")
 local GuiService = game:GetService("GuiService")
 
--- Sub-modules
--- We assume these are in the 'Aimbot' folder relative to this script
--- In a real Roblox environment, this would be require(script.Aimbot.Prediction)
--- but for this file-based structure, we'll use paths that make sense for the loader.
+
+
+
+
 local Prediction = require("modules/Aimbot/Prediction")
 local Targeting = require("modules/Aimbot/Targeting")
 local Input = require("modules/Aimbot/Input")
@@ -25,25 +25,25 @@ local Aimbot = {
     ToggleActive = false,
     LastKeyState = false,
     
-    -- FreeCam State
+    
     FreeCamActive = false,
     FreeCamPos = Vector3.new(0, 0, 0),
     FreeCamRot = Vector2.new(0, 0),
     OriginalCameraType = nil,
     OriginalCameraCFrame = nil,
     
-    -- Smooth Prediction Properties
-    LastPredictedDir = nil,
-    PredictionSmoothing = 0.2, -- Чем меньше, тем плавнее (0.1 - 0.5)
     
-    -- Velocity Averaging
+    LastPredictedDir = nil,
+    PredictionSmoothing = 0.2, 
+    
+    
     VelocityHistory = {},
     MaxHistorySize = 5,
 
     TargetLineLastPos = nil,
 }
 
--- Initialize FOV Circle
+
 local function CreateFOVCircle()
     local gui_parent = nil
     pcall(function()
@@ -90,7 +90,7 @@ local function CreateFOVCircle()
     line.Active = false
     line.Selectable = false
     line.BackgroundColor3 = Color3.new(1, 1, 1)
-    line.ZIndex = 10 -- Ensure it's on top
+    line.ZIndex = 10 
     line.Visible = false
     line.Parent = sg
     Aimbot.TargetLine = line
@@ -98,7 +98,7 @@ end
 
 CreateFOVCircle()
 
--- Interface methods delegating to sub-modules
+
 function Aimbot.GetProjectilePrediction(target, Settings, Ballistics, customOrigin)
     return Prediction.GetProjectilePrediction(target, Settings, Ballistics, customOrigin)
 end
@@ -173,7 +173,7 @@ function Aimbot.ApplyZoom(Settings)
     local camera = workspace.CurrentCamera
     if not camera then return end
     
-    -- Require weapon (Tool) to be equipped for zoom to engage
+    
     local character = LocalPlayer.Character
     local hasWeapon = false
     if character then
@@ -181,12 +181,12 @@ function Aimbot.ApplyZoom(Settings)
         hasWeapon = tool ~= nil
     end
     
-    -- Initialize BaseFOV if needed
+    
     if not Aimbot.BaseFOV then
         Aimbot.BaseFOV = camera.FieldOfView
     end
     
-    -- Determine zoom state
+    
     local isZooming = false
     if Settings.aimKeyMode == "Toggle" then
         isZooming = Aimbot.ToggleActive and hasWeapon
@@ -197,7 +197,7 @@ function Aimbot.ApplyZoom(Settings)
     local smoothness = Settings.zoomSmoothness or 0.1
     
     if isZooming then
-        -- Capture BaseFOV right before zooming starts
+        
         if not Aimbot.WasZooming then
             Aimbot.BaseFOV = camera.FieldOfView
             Aimbot.WasZooming = true
@@ -207,17 +207,17 @@ function Aimbot.ApplyZoom(Settings)
         camera.FieldOfView = camera.FieldOfView + (targetFOV - camera.FieldOfView) * smoothness
     else
         if Aimbot.WasZooming then
-            -- Returning to BaseFOV
+            
             local diff = math.abs(camera.FieldOfView - Aimbot.BaseFOV)
             if diff > 0.5 then
                  camera.FieldOfView = camera.FieldOfView + (Aimbot.BaseFOV - camera.FieldOfView) * smoothness
             else
-                 -- Done returning
+                 
                  camera.FieldOfView = Aimbot.BaseFOV
                  Aimbot.WasZooming = false
             end
         else
-            -- Not zooming, just tracking game FOV
+            
             Aimbot.BaseFOV = camera.FieldOfView
         end
     end
@@ -228,10 +228,10 @@ function Aimbot.Update(deltaTime, Settings, Utils, Ballistics, ESP)
     
     Aimbot.UpdateHitboxes(Settings, Utils, ESP)
     
-    -- Cache target for current frame to avoid multiple expensive searches
+    
     local currentFrameTarget = Aimbot.FindTarget(Settings, Utils)
     
-    -- Обновляем цель для Silent Aim один раз за кадр, чтобы не лагало в хуках
+    
     if Settings.silentAimEnabled then
         Aimbot.SilentTarget = currentFrameTarget
     else
@@ -241,7 +241,7 @@ function Aimbot.Update(deltaTime, Settings, Utils, Ballistics, ESP)
     local camera = workspace.CurrentCamera
     if not camera then return end
     
-    -- Main Aimbot State
+    
     local isPressed = false
     if Settings.aimKey then
         isPressed = Aimbot.IsInputPressed(Settings.aimKey)
@@ -265,7 +265,7 @@ function Aimbot.Update(deltaTime, Settings, Utils, Ballistics, ESP)
     end
     Aimbot.LastKeyState = isPressed
 
-    -- Silent Aim State (independent from main aimbot)
+    
     local isSilentPressed = false
     if Settings.silentAimKey then
         isSilentPressed = Aimbot.IsInputPressed(Settings.silentAimKey)
@@ -290,7 +290,7 @@ function Aimbot.Update(deltaTime, Settings, Utils, Ballistics, ESP)
     Aimbot.LastSilentKeyState = isSilentPressed
     Aimbot.IsSilentAiming = shouldSilentAim
     
-    -- Update CurrentTarget for Magic Bullets even if not aiming
+    
     if Settings.magicBulletEnabled then
         Aimbot.CurrentTarget = currentFrameTarget
     end
@@ -298,13 +298,13 @@ function Aimbot.Update(deltaTime, Settings, Utils, Ballistics, ESP)
     if shouldAim or shouldSilentAim then
         local target = currentFrameTarget
         if target and target.targetPart then
-            -- Reset smoothing and history if target changed
+            
             if Aimbot.CurrentTarget and Aimbot.CurrentTarget.player ~= target.player then
                 Aimbot.LastPredictedDir = nil
                 Aimbot.VelocityHistory = {}
             end
             
-            -- Velocity Averaging: Reduces jitter from physics noise
+            
             table.insert(Aimbot.VelocityHistory, target.velocity)
             if #Aimbot.VelocityHistory > (Aimbot.MaxHistorySize or 5) then
                 table.remove(Aimbot.VelocityHistory, 1)
@@ -316,7 +316,7 @@ function Aimbot.Update(deltaTime, Settings, Utils, Ballistics, ESP)
             end
             avgVelocity = avgVelocity / #Aimbot.VelocityHistory
             
-            -- Temporarily override target velocity with averaged one
+            
             local originalVelocity = target.velocity
             target.velocity = avgVelocity
             
@@ -325,20 +325,20 @@ function Aimbot.Update(deltaTime, Settings, Utils, Ballistics, ESP)
             if shouldAim then
                 Aimbot.IsAiming = true
                 
-                -- Use a much more stable origin (HumanoidRootPart is better than Head/Camera for prediction)
+                
                  local character = LocalPlayer.Character
                  local origin = camera.CFrame.Position
                  if character and character:FindFirstChild("HumanoidRootPart") then
-                     -- Stable origin: RootPart position + standard offset for eyes
+                     
                      origin = character.HumanoidRootPart.Position + Vector3.new(0, 1.5, 0)
                  end
      
                  local predictedDir = Aimbot.GetProjectilePrediction(target, Settings, Ballistics, origin)
                 
-                -- Restore original velocity just in case
+                
                 target.velocity = originalVelocity
                 
-                -- Smooth Prediction: Prevents jitter when target is moving erratically
+                
                 local pSmoothing = Settings.predictionSmoothing or 0.2
                 if Aimbot.LastPredictedDir and pSmoothing > 0 then
                     predictedDir = Aimbot.LastPredictedDir:Lerp(predictedDir, math.clamp(1 - pSmoothing, 0.01, 1))
@@ -348,20 +348,20 @@ function Aimbot.Update(deltaTime, Settings, Utils, Ballistics, ESP)
                 Aimbot.TargetPosition = origin + (predictedDir * 10)
                 
                 local currentCFrame = camera.CFrame
-                -- Safety check for lookAt to prevent "spinning" when looking straight up/down
+                
                 local upVector = Vector3.new(0, 1, 0)
                 if math.abs(predictedDir:Dot(upVector)) > 0.99 then
-                    upVector = Vector3.new(0, 0, 1) -- Use forward as up if looking vertically
+                    upVector = Vector3.new(0, 0, 1) 
                 end
                 
                 local targetCFrame = CFrame.lookAt(currentCFrame.Position, currentCFrame.Position + predictedDir, upVector)
                 
-                -- Improved Smoothness: use an exponential factor for better feel
+                
                 local smoothnessFactor = Settings.smoothness or 0.5
-                -- Limit deltaTime to prevent huge jumps after lag spikes
+                
                 local safeDeltaTime = math.min(deltaTime, 0.1)
                 
-                -- Adjust alpha to be more responsive but still smooth
+                
                 local alpha = math.clamp(safeDeltaTime * (smoothnessFactor * 120), 0, 1)
                 
                 if smoothnessFactor < 1 then
@@ -371,22 +371,22 @@ function Aimbot.Update(deltaTime, Settings, Utils, Ballistics, ESP)
                 end
             else
                 Aimbot.IsAiming = false
-                target.velocity = originalVelocity -- Restore for other uses
+                target.velocity = originalVelocity 
             end
         else
-            -- Reset state when target is lost
+            
             Aimbot.CurrentTarget = nil
             Aimbot.IsAiming = false
             Aimbot.TargetPosition = nil
             Aimbot.LastPredictedDir = nil
-            Aimbot.VelocityHistory = {} -- Clear history
+            Aimbot.VelocityHistory = {} 
         end
     else
-        -- Reset state when aiming stops
+        
         Aimbot.CurrentTarget = nil
         Aimbot.IsAiming = false
         Aimbot.TargetPosition = nil
-        Aimbot.LastPredictedDir = nil -- Reset smoothing when not aiming
+        Aimbot.LastPredictedDir = nil 
         Aimbot.VelocityHistory = {}
     end
 
@@ -402,11 +402,11 @@ function Aimbot.Update(deltaTime, Settings, Utils, Ballistics, ESP)
     Aimbot.ApplyAntiAFK(Settings)
     Aimbot.ApplyZoom(Settings)
     
-    -- Anti-Aim should be applied early or late depending on preference, 
-    -- but here we ensure it doesn't break the aimbot by running it after calculations.
+    
+    
     Aimbot.ApplyAntiAim(Settings)
 
-    -- Update FOV Circle
+    
     if Aimbot.FOVCircle then
         local enabled = Settings.fovCircleEnabled
         Aimbot.FOVCircle.Visible = enabled
@@ -416,12 +416,12 @@ function Aimbot.Update(deltaTime, Settings, Utils, Ballistics, ESP)
             local mousePos = UserInputService:GetMouseLocation()
             
             Aimbot.FOVCircle.Size = UDim2.new(0, radius * 2, 0, radius * 2)
-            -- GetMouseLocation is relative to screen, and ScreenGui is IgnoreGuiInset = true, so this is correct
+            
             Aimbot.FOVCircle.Position = UDim2.new(0, mousePos.X, 0, mousePos.Y)
         end
     end
 
-    -- Update Target Line
+    
     if Aimbot.TargetLine then
         local target = currentFrameTarget
         local showLine = Settings.targetLineEnabled and target ~= nil and target.targetPart ~= nil
@@ -432,12 +432,12 @@ function Aimbot.Update(deltaTime, Settings, Utils, Ballistics, ESP)
                 local targetPos, onScreen = camera:WorldToViewportPoint(target.targetPart.Position)
                 
                 if onScreen and targetPos.Z > 0 then
-                    -- Get the visual center of the target (Head or Torso) for the line
+                    
                     local visualPart = target.targetPart
                     pcall(function()
                         local char = Utils.getCharacter(target.player)
                         if char then
-                            -- Prioritize Head -> Torso -> Center for visual line to avoid pointing at feet
+                            
                             visualPart = char:FindFirstChild("Head") 
                                 or char:FindFirstChild("UpperTorso") 
                                 or char:FindFirstChild("Torso") 
@@ -449,26 +449,26 @@ function Aimbot.Update(deltaTime, Settings, Utils, Ballistics, ESP)
                         end
                     end)
                     
-                    -- Safety check for visualPart and its Position
+                    
                     local success, visualPos = pcall(function() return visualPart.Position end)
                     if not success or not visualPos then
                         visualPos = target.targetPart.Position
                     end
                     
-                    -- Use the raw position from WorldToViewportPoint for the line to avoid prediction offsets
+                    
                     local screenPos, visualOnScreen = camera:WorldToViewportPoint(visualPos)
                     
-                    -- Get precise start (center) and end (target) positions in Screen Space
+                    
                     local startPos = UserInputService:GetMouseLocation()
                     
-                    -- Use WorldToViewportPoint directly. Since ScreenGui.IgnoreGuiInset is true, 
-                    -- (0,0) is the top-left of the window, which matches WorldToViewportPoint.
-                    -- Adding GuiInset here was causing the line to point lower (e.g. at legs).
+                    
+                    
+                    
                     local endPos = Vector2.new(screenPos.X, screenPos.Y)
                     
-                    -- Remove heavy Lerp to prevent the line from lagging behind the head/torso
+                    
                     if Aimbot.TargetLineLastPos and typeof(Aimbot.TargetLineLastPos) == "Vector2" then
-                        endPos = Aimbot.TargetLineLastPos:Lerp(endPos, 0.9) -- High responsiveness
+                        endPos = Aimbot.TargetLineLastPos:Lerp(endPos, 0.9) 
                     end
                     Aimbot.TargetLineLastPos = endPos
                     
@@ -476,10 +476,10 @@ function Aimbot.Update(deltaTime, Settings, Utils, Ballistics, ESP)
                     local dist = diff.Magnitude
                     local radius = Settings.fovSize or 90
                     
-                    -- Show line if it's within a reasonable distance from center
+                    
                     if dist > 1 and dist <= (radius * 2.0) then
-                        -- CALCULATE MIDPOINT: This is crucial for Frame rotation without Drawing lib
-                        -- Frames rotate around their center (AnchorPoint 0.5, 0.5)
+                        
+                        
                         local midPoint = (startPos + endPos) / 2
                         local angle = math.atan2(diff.Y, diff.X)
                         local thickness = Settings.crosshairThickness or 1
@@ -517,7 +517,7 @@ function Aimbot.Remove()
         UserInputService.MouseBehavior = Enum.MouseBehavior.Default
         Aimbot.FreeCamActive = false
         
-        -- Restore collision if needed
+        
         local character = LocalPlayer.Character
         if character and Exploits.OriginalCollision then
             for part, originalValue in pairs(Exploits.OriginalCollision) do
@@ -536,7 +536,7 @@ function Aimbot.Remove()
         Aimbot.TargetLine = nil
     end
     
-    -- Restore hitboxes
+    
     if Hitboxes.OriginalProperties then
         for part, props in pairs(Hitboxes.OriginalProperties) do
             if part and part.Parent then
@@ -550,7 +550,7 @@ function Aimbot.Remove()
         Hitboxes.OriginalProperties = {}
     end
     
-    -- Restore Anti-Aim state
+    
     local character = LocalPlayer.Character
     local humanoid = character and character:FindFirstChildOfClass("Humanoid")
     if humanoid then humanoid.AutoRotate = true end

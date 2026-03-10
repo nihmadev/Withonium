@@ -11,7 +11,7 @@ function Chams.Update(player, character, humanoid, Settings, activeHighlights, m
             highlight.Parent = State.GetContainer()
             State.Highlights[player] = highlight
             
-            -- Скрываем меши аксессуаров один раз
+            
             for _, v in ipairs(character:GetChildren()) do
                 if v:IsA("Accessory") then
                     local handle = v:FindFirstChild("Handle")
@@ -26,7 +26,7 @@ function Chams.Update(player, character, humanoid, Settings, activeHighlights, m
         h.Enabled = true
         h.Adornee = character
         
-        -- Apply Chams Mode
+        
         if Settings.espChamsMode == "Glow" then
             h.FillTransparency = 0.5
             h.OutlineTransparency = 0
@@ -43,7 +43,7 @@ function Chams.Update(player, character, humanoid, Settings, activeHighlights, m
             h.FillColor = Settings.espColor
             h.OutlineColor = Settings.espOutlineColor or Color3.new(1, 1, 1)
         end
-        return true -- activeHighlights + 1
+        return true 
     else
         if State.Highlights[player] then
             State.Highlights[player].Enabled = false

@@ -32,7 +32,7 @@ local Visuals = {
 }
 
 function Visuals.Init(Settings)
-    -- Safe check for Decoration property
+    
     if Terrain then
         local success, val = pcall(function() return Terrain.Decoration end)
         if success then
@@ -41,7 +41,7 @@ function Visuals.Init(Settings)
         end
     end
 
-    -- Store Atmosphere settings
+    
     local atmosphere = Lighting:FindFirstChildOfClass("Atmosphere")
     if atmosphere then
         Visuals.OriginalAtmosphere = {
@@ -53,7 +53,7 @@ function Visuals.Init(Settings)
         }
     end
 
-    -- Store current settings as normal
+    
     Visuals.NormalSettings = {
         Brightness = Lighting.Brightness,
         ClockTime = Lighting.ClockTime,
@@ -62,7 +62,7 @@ function Visuals.Init(Settings)
         Ambient = Lighting.Ambient
     }
 
-    -- Watch for changes in Lighting
+    
     local function setupWatcher(property, targetValue)
         local connection = Lighting:GetPropertyChangedSignal(property):Connect(function()
             if Visuals.Enabled then
@@ -74,7 +74,7 @@ function Visuals.Init(Settings)
                     Lighting[property] = 1000000
                 end
             else
-                -- If disabled, update NormalSettings so we know what to restore to
+                
                 Visuals.NormalSettings[property] = Lighting[property]
             end
         end)
@@ -88,10 +88,10 @@ function Visuals.Init(Settings)
     setupWatcher("GlobalShadows", Visuals.FullBrightSettings.GlobalShadows)
     setupWatcher("Ambient", Visuals.FullBrightSettings.Ambient)
 
-    -- Watch Atmosphere
+    
     task.spawn(function()
         while task.wait(1) do
-            if not Visuals.Connections or #Visuals.Connections == 0 then break end -- Correct cleanup check
+            if not Visuals.Connections or #Visuals.Connections == 0 then break end 
             local atmosphere = Lighting:FindFirstChildOfClass("Atmosphere")
             if atmosphere and Visuals.NoFogEnabled then
                 if atmosphere.Density ~= 0 then atmosphere.Density = 0 end
@@ -100,7 +100,7 @@ function Visuals.Init(Settings)
         end
     end)
 
-    -- Watch Terrain for No Grass
+    
     if Terrain and Visuals.HasDecorationProperty then
         local connection = Terrain:GetPropertyChangedSignal("Decoration"):Connect(function()
             if Visuals.NoGrassEnabled then
@@ -116,12 +116,12 @@ function Visuals.Init(Settings)
 end
 
 function Visuals.Update(Settings)
-    -- FullBright logic
+    
     if Settings.fullBrightEnabled ~= Visuals.Enabled then
         Visuals.Enabled = Settings.fullBrightEnabled
         
         if Visuals.Enabled then
-            -- Apply FullBright
+            
             Lighting.Brightness = Visuals.FullBrightSettings.Brightness
             Lighting.ClockTime = Visuals.FullBrightSettings.ClockTime
             Lighting.FogEnd = Visuals.FullBrightSettings.FogEnd
@@ -129,7 +129,7 @@ function Visuals.Update(Settings)
             Lighting.GlobalShadows = Visuals.FullBrightSettings.GlobalShadows
             Lighting.Ambient = Visuals.FullBrightSettings.Ambient
         else
-            -- Restore Normal (or apply No Fog if active)
+            
             Lighting.Brightness = Visuals.NormalSettings.Brightness
             Lighting.ClockTime = Visuals.NormalSettings.ClockTime
             Lighting.GlobalShadows = Visuals.NormalSettings.GlobalShadows
@@ -144,7 +144,7 @@ function Visuals.Update(Settings)
         end
     end
 
-    -- No Fog logic (handles Atmosphere and Fog properties)
+    
     if Settings.noFogEnabled ~= Visuals.NoFogEnabled then
         Visuals.NoFogEnabled = Settings.noFogEnabled
         
@@ -168,7 +168,7 @@ function Visuals.Update(Settings)
         end
     end
 
-    -- No Grass logic (Terrain decoration and potentially models)
+    
     if Settings.noGrassEnabled ~= Visuals.NoGrassEnabled then
         Visuals.NoGrassEnabled = Settings.noGrassEnabled
         
@@ -176,13 +176,13 @@ function Visuals.Update(Settings)
             Terrain.Decoration = not Visuals.NoGrassEnabled
         end
         
-        -- Optimized: Only search once when toggled
+        
         task.spawn(function()
             pcall(function()
                 local grassNames = {"Grass", "TallGrass", "Shrub", "Bush"}
                 local targetTransparency = Visuals.NoGrassEnabled and 1 or 0
                 
-                -- Optimization: only process parts directly to avoid double processing
+                
                 local allDescendants = workspace:GetDescendants()
                 for i = 1, #allDescendants do
                     local v = allDescendants[i]
@@ -196,7 +196,7 @@ function Visuals.Update(Settings)
                             end
                         end
                         
-                        -- If not found by name, check parent model name
+                        
                         if not isGrass then
                             local parent = v.Parent
                             if parent and parent:IsA("Model") then
@@ -226,14 +226,14 @@ function Visuals.Unload()
     end
     Visuals.Connections = {}
     
-    -- Restore lighting on unload
+    
     Lighting.Brightness = Visuals.NormalSettings.Brightness
     Lighting.ClockTime = Visuals.NormalSettings.ClockTime
     Lighting.FogEnd = Visuals.NormalSettings.FogEnd
     Lighting.GlobalShadows = Visuals.NormalSettings.GlobalShadows
     Lighting.Ambient = Visuals.NormalSettings.Ambient
 
-    -- Restore grass
+    
     if Terrain and Visuals.HasDecorationProperty then
         Terrain.Decoration = Visuals.OriginalDecoration
     end

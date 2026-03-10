@@ -1,4 +1,4 @@
--- Withonium Loader (Single File Version)
+
 local function log(msg)
     pcall(function()
         warn("[LOG] " .. tostring(msg))

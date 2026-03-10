@@ -43,7 +43,7 @@ end
 
 function Crosshair.CreateSegment(parent, size, pos, rotation)
     local frame = Instance.new("Frame")
-    frame.BackgroundColor3 = Color3.new(1, 1, 1) -- Will be updated
+    frame.BackgroundColor3 = Color3.new(1, 1, 1) 
     frame.BorderSizePixel = 0
     frame.Active = false
     frame.Selectable = false
@@ -84,59 +84,59 @@ function Crosshair.Update(Settings)
         Crosshair.MainFrame.Parent = Crosshair.ScreenGui
 
         if type == "Default" then
-            -- Vertical
+            
             table.insert(Crosshair.Segments, Crosshair.CreateSegment(Crosshair.MainFrame, UDim2.new(0, thickness, 0, size * 2), UDim2.new(0, 0, 0, 0)))
-            -- Horizontal
+            
             table.insert(Crosshair.Segments, Crosshair.CreateSegment(Crosshair.MainFrame, UDim2.new(0, size * 2, 0, thickness), UDim2.new(0, 0, 0, 0)))
         elseif type == "X" then
-            -- Diagonal 1
+            
             table.insert(Crosshair.Segments, Crosshair.CreateSegment(Crosshair.MainFrame, UDim2.new(0, thickness, 0, size * 2), UDim2.new(0, 0, 0, 0), 45))
-            -- Diagonal 2
+            
             table.insert(Crosshair.Segments, Crosshair.CreateSegment(Crosshair.MainFrame, UDim2.new(0, thickness, 0, size * 2), UDim2.new(0, 0, 0, 0), -45))
         elseif type == "Swastika" then
-            -- 8 segments for swastika
+            
             for i = 1, 8 do
                 table.insert(Crosshair.Segments, Crosshair.CreateSegment(Crosshair.MainFrame, UDim2.new(0, size, 0, thickness), UDim2.new(0, 0, 0, 0)))
             end
         end
     end
 
-    -- Update position
+    
     Crosshair.MainFrame.Position = UDim2.new(0, mousePos.X, 0, mousePos.Y)
 
-    -- Update Swastika logic
+    
     if type == "Swastika" then
         Crosshair.Rotation = (Crosshair.Rotation + 2) % 360
         Crosshair.MainFrame.Rotation = Crosshair.Rotation
         
         local halfSize = size / 2
-        -- Segment positions relative to center
-        -- Segment 1 & 2: Top Right
+        
+        
         Crosshair.Segments[1].Position = UDim2.new(0, halfSize, 0, 0)
         Crosshair.Segments[1].Size = UDim2.new(0, size, 0, thickness)
         Crosshair.Segments[2].Position = UDim2.new(0, size, 0, halfSize)
         Crosshair.Segments[2].Size = UDim2.new(0, thickness, 0, size)
         
-        -- Segment 3 & 4: Bottom Right
+        
         Crosshair.Segments[3].Position = UDim2.new(0, 0, 0, halfSize)
         Crosshair.Segments[3].Size = UDim2.new(0, thickness, 0, size)
         Crosshair.Segments[4].Position = UDim2.new(0, -halfSize, 0, size)
         Crosshair.Segments[4].Size = UDim2.new(0, size, 0, thickness)
         
-        -- Segment 5 & 6: Bottom Left
+        
         Crosshair.Segments[5].Position = UDim2.new(0, -halfSize, 0, 0)
         Crosshair.Segments[5].Size = UDim2.new(0, size, 0, thickness)
         Crosshair.Segments[6].Position = UDim2.new(0, -size, 0, -halfSize)
         Crosshair.Segments[6].Size = UDim2.new(0, thickness, 0, size)
         
-        -- Segment 7 & 8: Top Left
+        
         Crosshair.Segments[7].Position = UDim2.new(0, 0, 0, -halfSize)
         Crosshair.Segments[7].Size = UDim2.new(0, thickness, 0, size)
         Crosshair.Segments[8].Position = UDim2.new(0, halfSize, 0, -size)
         Crosshair.Segments[8].Size = UDim2.new(0, size, 0, thickness)
     end
 
-    -- Update common properties
+    
     for _, segment in ipairs(Crosshair.Segments) do
         segment.BackgroundColor3 = color
         if type ~= "Swastika" then
@@ -147,7 +147,7 @@ function Crosshair.Update(Settings)
                     segment.Size = UDim2.new(0, thickness, 0, size * 2)
                 end
             elseif type == "X" then
-                segment.Size = UDim2.new(0, thickness, 0, size * 2.5) -- Make X a bit longer
+                segment.Size = UDim2.new(0, thickness, 0, size * 2.5) 
             end
         end
     end

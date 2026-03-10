@@ -200,21 +200,21 @@ function Labels.Update(player, character, rootPart, humanoid, Settings, distance
                 enemySlotsFrame.Visible = true
                 local items = {}
                 
-                -- Optimization: only update slots if visible and character changed or every few frames
-                -- We can use a simple tick() check on the bbg itself
+                
+                
                 local lastItemUpdate = bbg:GetAttribute("LastItemUpdate") or 0
                 local now = tick()
                 
                 if now - lastItemUpdate > 1 then
                     bbg:SetAttribute("LastItemUpdate", now)
                     
-                    -- Get equipped tool
+                    
                     local equipped = character:FindFirstChildWhichIsA("Tool")
                     if equipped then
                         table.insert(items, equipped)
                     end
                     
-                    -- Get backpack items
+                    
                     local backpack = player:FindFirstChild("Backpack")
                     if backpack then
                         local backpackChildren = backpack:GetChildren()

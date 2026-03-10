@@ -22,7 +22,7 @@ local function loadWithTimeout(url: string, timeout: number?): ...any
 	local requestThread = task.spawn(function()
 		local fetchSuccess, fetchResult
 		
-		-- Use executor's request if available (more reliable)
+		
 		local requestFunc = (syn and syn.request) or (fluxus and fluxus.request) or (http and http.request) or http_request or request
 		if requestFunc then
 			fetchSuccess, fetchResult = pcall(function()
@@ -36,7 +36,7 @@ local function loadWithTimeout(url: string, timeout: number?): ...any
 				error(res and ("HTTP " .. tostring(res.StatusCode)) or "Unknown error")
 			end)
 		else
-			-- Fallback to HttpGet with retry
+			
 			for i = 1, 3 do
 				fetchSuccess, fetchResult = pcall(function()
 					return game:HttpGet(url)
@@ -1196,12 +1196,12 @@ local function Hide(notify: boolean?)
 
 	for _, tab in ipairs(Elements:GetChildren()) do
 		if tab.Name ~= "Template" and tab.ClassName == "ScrollingFrame" and tab.Name ~= "Placeholder" then
-			-- Check if this tab has a SplitContainer (split layout)
+			
 			local splitContainer = tab:FindFirstChild("SplitContainer")
 			local elementsToProcess = {}
 			
 			if splitContainer then
-				-- Process Left and Right sides separately
+				
 				for _, side in ipairs(splitContainer:GetChildren()) do
 					if side:IsA("ScrollingFrame") then
 						for _, element in ipairs(side:GetChildren()) do
@@ -1210,13 +1210,13 @@ local function Hide(notify: boolean?)
 					end
 				end
 			else
-				-- Normal tab without split
+				
 				for _, element in ipairs(tab:GetChildren()) do
 					table.insert(elementsToProcess, element)
 				end
 			end
 			
-			-- Process all collected elements
+			
 			for _, element in ipairs(elementsToProcess) do
 				if element.ClassName == "Frame" then
 					if element.Name ~= "SectionSpacing" and element.Name ~= "Placeholder" and element.Name ~= "VerticalSeparator" and element.Name ~= "SplitContainer" then
@@ -1267,7 +1267,7 @@ local function Maximise()
 	TweenService:Create(Main, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), {Size = useMobileSizing and UDim2.new(0, 500, 0, 275) or UDim2.new(0, 850, 0, 475)}):Play()
 	TweenService:Create(Topbar, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), {Size = useMobileSizing and UDim2.new(0, 500, 0, 45) or UDim2.new(0, 850, 0, 45)}):Play()
 	
-	-- Плавное появление кнопки поиска
+	
 	if Topbar:FindFirstChild('Search') then
 		Topbar.Search.Visible = true
 		TweenService:Create(Topbar.Search, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), {ImageTransparency = 0.8}):Play()
@@ -1280,12 +1280,12 @@ local function Maximise()
 
 	for _, tab in ipairs(Elements:GetChildren()) do
 		if tab.Name ~= "Template" and tab.ClassName == "ScrollingFrame" and tab.Name ~= "Placeholder" then
-			-- Check if this tab has a SplitContainer (split layout)
+			
 			local splitContainer = tab:FindFirstChild("SplitContainer")
 			local elementsToProcess = {}
 			
 			if splitContainer then
-				-- Process Left and Right sides separately
+				
 				for _, side in ipairs(splitContainer:GetChildren()) do
 					if side:IsA("ScrollingFrame") then
 						for _, element in ipairs(side:GetChildren()) do
@@ -1294,13 +1294,13 @@ local function Maximise()
 					end
 				end
 			else
-				-- Normal tab without split
+				
 				for _, element in ipairs(tab:GetChildren()) do
 					table.insert(elementsToProcess, element)
 				end
 			end
 			
-			-- Process all collected elements
+			
 			for _, element in ipairs(elementsToProcess) do
 				if element.ClassName == "Frame" then
 					if element.Name ~= "SectionSpacing" and element.Name ~= "Placeholder" and element.Name ~= "VerticalSeparator" and element.Name ~= "SplitContainer" then
@@ -1327,7 +1327,7 @@ local function Maximise()
 									child.Visible = true
 								else
 									child.Visible = true
-									-- Make sure Controls and its children are visible
+									
 									for _, controlChild in ipairs(child:GetChildren()) do
 										if controlChild:IsA("ImageButton") then
 											controlChild.Visible = true
@@ -1426,12 +1426,12 @@ local function Unhide()
 
 	for _, tab in ipairs(Elements:GetChildren()) do
 		if tab.Name ~= "Template" and tab.ClassName == "ScrollingFrame" and tab.Name ~= "Placeholder" then
-			-- Check if this tab has a SplitContainer (split layout)
+			
 			local splitContainer = tab:FindFirstChild("SplitContainer")
 			local elementsToProcess = {}
 			
 			if splitContainer then
-				-- Process Left and Right sides separately
+				
 				for _, side in ipairs(splitContainer:GetChildren()) do
 					if side:IsA("ScrollingFrame") then
 						for _, element in ipairs(side:GetChildren()) do
@@ -1440,13 +1440,13 @@ local function Unhide()
 					end
 				end
 			else
-				-- Normal tab without split
+				
 				for _, element in ipairs(tab:GetChildren()) do
 					table.insert(elementsToProcess, element)
 				end
 			end
 			
-			-- Process all collected elements
+			
 			for _, element in ipairs(elementsToProcess) do
 				if element.ClassName == "Frame" then
 					if element.Name ~= "SectionSpacing" and element.Name ~= "Placeholder" and element.Name ~= "VerticalSeparator" and element.Name ~= "SplitContainer" then
@@ -1473,7 +1473,7 @@ local function Unhide()
 									child.Visible = true
 								else
 									child.Visible = true
-									-- Make sure Controls and its children are visible
+									
 									for _, controlChild in ipairs(child:GetChildren()) do
 										if controlChild:IsA("ImageButton") then
 											controlChild.Visible = true
@@ -1501,7 +1501,7 @@ local function Minimise()
 
 	Topbar.UIStroke.Color = SelectedTheme.ElementStroke
 
-	-- Плавное исчезновение кнопки поиска
+	
 	if Topbar:FindFirstChild('Search') then
 		local searchTween = TweenService:Create(Topbar.Search, TweenInfo.new(0.3, Enum.EasingStyle.Exponential), {ImageTransparency = 1})
 		searchTween:Play()
@@ -1523,12 +1523,12 @@ local function Minimise()
 
 	for _, tab in ipairs(Elements:GetChildren()) do
 		if tab.Name ~= "Template" and tab.ClassName == "ScrollingFrame" and tab.Name ~= "Placeholder" then
-			-- Check if this tab has a SplitContainer (split layout)
+			
 			local splitContainer = tab:FindFirstChild("SplitContainer")
 			local elementsToProcess = {}
 			
 			if splitContainer then
-				-- Process Left and Right sides separately
+				
 				for _, side in ipairs(splitContainer:GetChildren()) do
 					if side:IsA("ScrollingFrame") then
 						for _, element in ipairs(side:GetChildren()) do
@@ -1537,13 +1537,13 @@ local function Minimise()
 					end
 				end
 			else
-				-- Normal tab without split
+				
 				for _, element in ipairs(tab:GetChildren()) do
 					table.insert(elementsToProcess, element)
 				end
 			end
 			
-			-- Process all collected elements
+			
 			for _, element in ipairs(elementsToProcess) do
 				if element.ClassName == "Frame" then
 					if element.Name ~= "SectionSpacing" and element.Name ~= "Placeholder" and element.Name ~= "VerticalSeparator" and element.Name ~= "SplitContainer" then
@@ -1736,13 +1736,13 @@ local function createSettings(window)
 				end
 			})
 
-			-- Добавляем кнопки управления справа
+			
 			local Container = Instance.new("Frame")
 			Container.Name = "Controls"
 			Container.Size = UDim2.new(0, 60, 1, -10)
 			Container.Position = UDim2.new(1, -70, 0, 5)
 			Container.BackgroundTransparency = 1
-			Container.Parent = ConfigSettings.Element -- Используем сохраненную ссылку на объект кнопки
+			Container.Parent = ConfigSettings.Element 
 			
 			local Layout = Instance.new("UIListLayout")
 			Layout.FillDirection = Enum.FillDirection.Horizontal
@@ -1758,18 +1758,18 @@ local function createSettings(window)
 				btn.Image = getAssetUri(icon)
 				btn.ImageColor3 = color or SelectedTheme.TextColor
 				btn.Parent = Container
-				btn.ZIndex = 10 -- Поверх кнопки
+				btn.ZIndex = 10 
 				btn.MouseButton1Click:Connect(callback)
 				return btn
 			end
 
-			CreateControl(4483362458, function() -- Load icon
+			CreateControl(4483362458, function() 
 				CFileName = name
 				loadSettings()
 				WithoniumRTYLibrary:Notify({Title = 'Config Loaded', Content = 'Loaded '..name, Duration = 5})
 			end, Color3.fromRGB(100, 255, 100))
 
-			CreateControl(4384403532, function() -- Delete icon
+			CreateControl(4384403532, function() 
 				delfile(file)
 				updateConfigs()
 				WithoniumRTYLibrary:Notify({Title = 'Config Deleted', Content = 'Deleted '..name, Duration = 5})
@@ -1880,7 +1880,7 @@ local function setVisibility(visibility: boolean, notify: boolean?)
 	local Passthrough = false
 	Topbar.Title.Text = Settings.Name
 	
-	-- Logo Implementation
+	
 	if Settings.Icon then
 		local logoId = ensureLogo(Settings.Icon)
 		if logoId then
@@ -1903,7 +1903,7 @@ local function setVisibility(visibility: boolean, notify: boolean?)
 	if Main:FindFirstChild('Notice') then Main.Notice.Visible = false end
 	Main.Shadow.Image.ImageTransparency = 0.6
 
-	-- Center TabList and add spacing
+	
 	local TabListLayout = TabList:FindFirstChildOfClass("UIListLayout")
 	if not TabListLayout then
 		TabListLayout = Instance.new("UIListLayout")
@@ -1919,12 +1919,12 @@ local function setVisibility(visibility: boolean, notify: boolean?)
 	TabListLayout.VerticalAlignment = Enum.VerticalAlignment.Center
 	TabListLayout.Padding = UDim.new(0, 15)
 	
-	-- Position and Size TabList to be at the top and centered
+	
 	TabList.Size = UDim2.new(1, -20, 0, 35)
 	TabList.Position = UDim2.new(0.5, 0, 0, 58)
 	TabList.AnchorPoint = Vector2.new(0.5, 0)
 	TabList.BackgroundTransparency = 1
-	TabList.ClipsDescendants = true -- Enable clipping for tabs
+	TabList.ClipsDescendants = true 
 	
 	if TabList:IsA("ScrollingFrame") then
 		TabList.ScrollBarThickness = 0
@@ -1932,14 +1932,14 @@ local function setVisibility(visibility: boolean, notify: boolean?)
 		TabList.AutomaticCanvasSize = Enum.AutomaticSize.None
 	end
 	
-	-- Adjust Elements (content area) to fill the remaining space below tabs
+	
 	Elements.AnchorPoint = Vector2.new(0.5, 0)
 	Elements.Position = UDim2.new(0.5, 0, 0, 98)
 	Elements.Size = UDim2.new(1, -20, 1, -108)
 	Elements.BackgroundTransparency = 1
-	Elements.ClipsDescendants = true -- Keep clipping enabled for function container
+	Elements.ClipsDescendants = true 
 	
-	-- Add padding to Elements to prevent clipping issues
+	
 	local ElementsPadding = Elements:FindFirstChildOfClass("UIPadding")
 	if not ElementsPadding then
 		ElementsPadding = Instance.new("UIPadding")
@@ -2314,7 +2314,7 @@ local function setVisibility(visibility: boolean, notify: boolean?)
 		TabPage.Visible = true
 		TabPage.Size = UDim2.new(1, 0, 1, 0)
 		TabPage.Position = UDim2.new(0, 0, 0, 0)
-		TabPage.ClipsDescendants = true -- Re-enable clipping for scrolling logic
+		TabPage.ClipsDescendants = true 
 
 		TabPage.LayoutOrder = #Elements:GetChildren() or Ext and 10000
 
@@ -2326,7 +2326,7 @@ local function setVisibility(visibility: boolean, notify: boolean?)
 
 		TabPage.Parent = Elements
 		
-		-- Ensure TabPage (ScrollingFrame) has clean properties for layout
+		
 		if TabPage:IsA("ScrollingFrame") then
 			TabPage.ScrollBarThickness = 2
 			TabPage.ScrollBarImageColor3 = SelectedTheme.TextColor
@@ -2513,7 +2513,7 @@ local function setVisibility(visibility: boolean, notify: boolean?)
 			local Display = Background.Display
 			local Main = Background.MainCP
 			local Slider = ColorPicker.ColorSlider
-			ColorPicker.ClipsDescendants = true -- Re-enable clipping
+			ColorPicker.ClipsDescendants = true 
 			ColorPicker.Name = ColorPickerSettings.Name
 			ColorPicker.Title.Text = ColorPickerSettings.Name
 			ColorPicker.Visible = true
@@ -2522,23 +2522,23 @@ local function setVisibility(visibility: boolean, notify: boolean?)
 			Background.Size = UDim2.new(0, 39, 0, 22)
 			Background.Position = UDim2.new(1, -10, 0.5, 0)
 			Background.AnchorPoint = Vector2.new(1, 0.5)
-			Background.ZIndex = 5 -- Ensure it stays on top
-			Background.ClipsDescendants = false -- Prevent square from being clipped
-			Display.ZIndex = 6 -- Ensure color box is visible
+			Background.ZIndex = 5 
+			Background.ClipsDescendants = false 
+			Display.ZIndex = 6 
 			Display.BackgroundTransparency = 0
 			Main.MainPoint.ImageTransparency = 1
 			ColorPicker.Interact.Size = UDim2.new(1, 0, 1, 0)
 			ColorPicker.Interact.Position = UDim2.new(0.5, 0, 0.5, 0)
-			ColorPicker.Interact.BackgroundTransparency = 1 -- Make it transparent
-			ColorPicker.Interact.ZIndex = 10 -- High ZIndex to catch clicks
-			ColorPicker.RGB.Position = UDim2.new(0, 5, 0, 70) -- Shifted more to the left
+			ColorPicker.Interact.BackgroundTransparency = 1 
+			ColorPicker.Interact.ZIndex = 10 
+			ColorPicker.RGB.Position = UDim2.new(0, 5, 0, 70) 
 			ColorPicker.HexInput.Position = UDim2.new(0, 5, 0, 90)
 			Slider.Position = UDim2.new(1, -10, 0, 110)
 			Slider.AnchorPoint = Vector2.new(1, 0.5)
 			Slider.Size = UDim2.new(0, 173, 0, 12)
 			Main.ImageTransparency = 1
-			Main.BackgroundTransparency = 1 -- Ensure hue shows through the gradient
-			Main.ZIndex = 8 -- Ensure gradient is on top of Background
+			Main.BackgroundTransparency = 1 
+			Main.ZIndex = 8 
 			Background.BackgroundTransparency = 1
 
 			for _, rgbinput in ipairs(ColorPicker.RGB:GetChildren()) do
@@ -3389,7 +3389,7 @@ local function setVisibility(visibility: boolean, notify: boolean?)
 
 			Keybind.KeybindFrame.KeybindBox.Focused:Connect(function()
 				Keybind.KeybindFrame.KeybindBox.Text = ""
-				task.wait() -- Wait one frame to avoid capturing the click that focused the box
+				task.wait() 
 				CheckingForKey = true
 			end)
 			Keybind.KeybindFrame.KeybindBox.FocusLost:Connect(function()
@@ -3855,12 +3855,12 @@ local function setVisibility(visibility: boolean, notify: boolean?)
 		function Tab:Split(ratio)
 			ratio = ratio or 0.75
 			
-			-- Clear existing layout in TabPage if any
+			
 			local list = TabPage:FindFirstChildOfClass("UIListLayout")
 			if list and list:IsA("UIListLayout") then
 				local success = pcall(function() list.Enabled = false end)
 				if not success then
-					list:Destroy() -- Fallback if Enabled isn't supported (though it should be for UIListLayout)
+					list:Destroy() 
 				end
 			end
 			
@@ -3888,21 +3888,21 @@ local function setVisibility(visibility: boolean, notify: boolean?)
 			local function CreateSubPage(name, widthRatio, layoutOrder)
 				local SubPage = Elements.Template:Clone()
 				SubPage.Name = name
-				-- Subtraction to account for layout padding
+				
 				SubPage.Size = UDim2.new(widthRatio, -15, 1, 0)
 				SubPage.Visible = true
 				SubPage.LayoutOrder = layoutOrder
-				SubPage.ClipsDescendants = true -- Re-enable clipping
+				SubPage.ClipsDescendants = true 
 				SubPage.Parent = Container
 				
-				-- Clear template elements
+				
 				for _, child in ipairs(SubPage:GetChildren()) do
 					if child.ClassName == "Frame" and child.Name ~= "Placeholder" then
 						child:Destroy()
 					end
 				end
 
-				-- Fix for UIListLayout
+				
 				local oldLayout = SubPage:FindFirstChildOfClass("UIListLayout")
 				if oldLayout then oldLayout:Destroy() end
 
@@ -3911,7 +3911,7 @@ local function setVisibility(visibility: boolean, notify: boolean?)
 				SubLayout.Padding = UDim.new(0, 5)
 				SubLayout.Parent = SubPage
 				
-				-- Add padding to prevent clipping of borders/sliders
+				
 				local padding = SubPage:FindFirstChildOfClass("UIPadding")
 				if not padding then
 					padding = Instance.new("UIPadding")
@@ -3922,7 +3922,7 @@ local function setVisibility(visibility: boolean, notify: boolean?)
 				padding.PaddingTop = UDim.new(0, 5)
 				padding.PaddingBottom = UDim.new(0, 5)
 				
-				-- Auto-update CanvasSize based on content
+				
 				SubLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
 					SubPage.CanvasSize = UDim2.new(0, 0, 0, SubLayout.AbsoluteContentSize.Y + 10)
 				end)
@@ -3934,7 +3934,7 @@ local function setVisibility(visibility: boolean, notify: boolean?)
 			
 			local Left = CreateSubPage("Left", ratio, 1)
 			
-			-- Separator between Left and Right
+			
 			local Separator = Instance.new("Frame")
 			Separator.Name = "VerticalSeparator"
 			Separator.Size = UDim2.new(0, 1, 1, -10)
@@ -3944,9 +3944,9 @@ local function setVisibility(visibility: boolean, notify: boolean?)
 			Separator.LayoutOrder = 2
 			Separator.Parent = Container
 			
-			-- Calculate right width: subtract left ratio, separator width, and padding
-			-- Total padding = 8px * 2 (between left-sep and sep-right) + 1px (separator) = 17px
-			-- We need to account for this in scale calculation
+			
+			
+			
 			local rightRatio = 1 - ratio
 			local Right = CreateSubPage("Right", rightRatio, 3)
 			
@@ -4174,7 +4174,7 @@ end
 for _, TopbarButton in ipairs(Topbar:GetChildren()) do
 	if TopbarButton.ClassName == "ImageButton" and TopbarButton.Name ~= 'Icon' then
 		TopbarButton.MouseEnter:Connect(function()
-			-- Не показываем кнопку Search если окно свернуто
+			
 			if TopbarButton.Name == 'Search' and Minimised then
 				return
 			end
@@ -4182,7 +4182,7 @@ for _, TopbarButton in ipairs(Topbar:GetChildren()) do
 		end)
 
 		TopbarButton.MouseLeave:Connect(function()
-			-- Не показываем кнопку Search если окно свернуто
+			
 			if TopbarButton.Name == 'Search' and Minimised then
 				return
 			end
@@ -4250,7 +4250,7 @@ if CEnabled and Main:FindFirstChild('Notice') then
 	TweenService:Create(Main.Notice, TweenInfo.new(0.5, Enum.EasingStyle.Exponential, Enum.EasingDirection.InOut), {Size = UDim2.new(0, 280, 0, 35), Position = UDim2.new(0.5, 0, 0, -50), BackgroundTransparency = 0.5}):Play()
 	TweenService:Create(Main.Notice.Title, TweenInfo.new(0.5, Enum.EasingStyle.Exponential), {TextTransparency = 0.1}):Play()
 end
--- AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA why -- dont cry bro (nihmadev)
+
 task.delay(4, function()
 	WithoniumRTYLibrary.LoadConfiguration()
 	if Main:FindFirstChild('Notice') and Main.Notice.Visible then

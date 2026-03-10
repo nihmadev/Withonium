@@ -8,22 +8,22 @@ local Utils = {
     BodyPartsCache = {}
 }
 
--- Initialize shared params
+
 Utils.SharedRaycastParams.FilterType = Enum.RaycastFilterType.Exclude
 Utils.SharedRaycastParams.IgnoreWater = true
 
 function Utils.getCharacter(player)
     if not player then return nil end
     
-    -- Standard Roblox Character
+    
     if player.Character then return player.Character end
     
-    -- Support for games with custom characters (Trident Survival, etc.)
-    -- PlaceId for Trident Survival
+    
+    
     if game.PlaceId == 13253735473 or game.PlaceId == 8130299583 then
         local renv = getrenv and getrenv()
         if renv and renv._G then
-            -- Check for various character storage locations
+            
             if renv._G.Character and renv._G.Character.character then
                 if player == Players.LocalPlayer then
                     return renv._G.Character.character
@@ -31,7 +31,7 @@ function Utils.getCharacter(player)
             end
         end
         
-        -- Fallback: check workspace for a model with player name if standard Character is nil
+        
         local ignorePlayers = workspace:FindFirstChild("Ignore") and workspace.Ignore:FindFirstChild("Players")
         if ignorePlayers then
             local char = ignorePlayers:FindFirstChild(player.Name)
@@ -53,8 +53,8 @@ function Utils.getBodyPart(character, partName)
     if partName == "Head" then
         return character:FindFirstChild("Head")
     elseif partName == "Torso" then
-        -- Prefer actual Torso parts for Hitbox Expander stability, as HumanoidRootPart can break physics
-        -- Trident Survival uses "Middle"
+        
+        
         return character:FindFirstChild("UpperTorso") or character:FindFirstChild("Torso") or character:FindFirstChild("HumanoidRootPart") or character:FindFirstChild("Middle")
     elseif partName == "Legs" then
         return character:FindFirstChild("LeftUpperLeg") or character:FindFirstChild("Left Leg") or character:FindFirstChild("RightUpperLeg") or character:FindFirstChild("Right Leg")
@@ -63,7 +63,7 @@ function Utils.getBodyPart(character, partName)
 end
 
 function Utils.getAllBodyParts(character, partName)
-    -- Reuse table from cache to avoid allocations
+    
     local parts = Utils.BodyPartsCache
     for k in pairs(parts) do parts[k] = nil end
     
@@ -100,14 +100,14 @@ function Utils.isPartVisible(part, character)
     
     if direction.Magnitude < 0.1 then return true end
     
-    -- Reuse shared params and filter table
+    
     local params = Utils.SharedRaycastParams
     local filter = Utils.SharedFilterTable
     
-    -- Clear filter table
+    
     for k in pairs(filter) do filter[k] = nil end
     
-    -- Add target character and local character to filter
+    
     if typeof(character) == "Instance" then
         table.insert(filter, character)
     end
@@ -121,29 +121,29 @@ function Utils.isPartVisible(part, character)
         table.insert(filter, LocalPlayer.Character)
     end
     
-    -- Add camera and standard ignore folders
+    
     table.insert(filter, camera)
     local ignore = workspace:FindFirstChild("Ignore")
     if ignore then table.insert(filter, ignore) end
     
     params.FilterDescendantsInstances = filter
     
-    -- Pierce through transparent/non-collidable objects
+    
     local currentOrigin = origin + (direction.Unit * 0.1)
     local currentDirection = (destination - currentOrigin)
     
-    for i = 1, 3 do -- Limit pierces to 3 for performance
+    for i = 1, 3 do 
         local result = workspace:Raycast(currentOrigin, currentDirection, params)
         if not result then return true end
         
         local hit = result.Instance
         local canPierce = false
         
-        -- Check if we should pierce this object
+        
         if hit.Transparency > 0.7 or not hit.CanCollide then
             canPierce = true
         else
-            -- Check for common names that should be ignored
+            
             local name = hit.Name:lower()
             if name:find("grass") or name:find("leaf") or name:find("cloud") or name:find("effect") or name:find("particle") then
                 canPierce = true
@@ -172,14 +172,14 @@ function Utils.isHouse(part)
     local parent = part.Parent
     local parentName = parent and parent.Name:lower() or ""
     
-    -- Heuristics for houses/buildings (more specific)
+    
     if name:find("wall") or name:find("roof") or name:find("door") or 
        name:find("house") or name:find("building") or name:find("struct") or 
        parentName:find("house") or parentName:find("building") or parentName:find("struct") then
         return true
     end
     
-    -- Many games put buildings in specific folders
+    
     if parent and (parent:IsA("Folder") or parent:IsA("Model")) then
         if parentName:find("build") or parentName:find("house") or parentName:find("base") then
             return true

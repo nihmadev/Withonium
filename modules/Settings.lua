@@ -1,5 +1,5 @@
 local Settings = {
-    -- Aimbot Settings
+    
     aimbotEnabled = false,
     teamCheckEnabled = true,
     visibleCheckEnabled = true,
@@ -14,8 +14,8 @@ local Settings = {
     targetLineEnabled = true,
     targetLineColor = Color3.fromRGB(255, 255, 255),
     smoothness = 0.08,
-    predictionFactor = 1.0, -- Default to 1.0
-    predictionSmoothing = 0.2, -- Smoothing for prediction to avoid jitter
+    predictionFactor = 1.0, 
+    predictionSmoothing = 0.2, 
     projectilePredictionEnabled = true,
     projectileSpeed = 1000,
     projectileGravity = 196.2,
@@ -23,10 +23,10 @@ local Settings = {
     zoomEnabled = true,
     zoomAmount = 20,
     zoomSmoothness = 0.1,
-    targetPriority = "Distance", -- "Distance", "Crosshair", "Balanced"
+    targetPriority = "Distance", 
     aimKey = Enum.UserInputType.MouseButton1,
-    aimKeyMode = "Hold", -- "Hold", "Toggle", "Always"
-    targetPart = "Head", -- "Head", "Torso", "Legs"
+    aimKeyMode = "Hold", 
+    targetPart = "Head", 
     silentAimKey = Enum.KeyCode.Unknown,
     silentAimKeyMode = "Toggle",
 
@@ -54,29 +54,29 @@ local Settings = {
     waterSpeedHackEnabled = false,
     waterSpeedMultiplier = 1,
     godModeEnabled = false,
-    hitboxExpanderEnabled = true, -- Changed to true for testing
+    hitboxExpanderEnabled = true, 
     hitboxExpanderSize = 5,
     hitboxExpanderShow = false,
     
-    -- Anti-Aim Settings
+    
     antiAimEnabled = false,
-    antiAimMode = "Spin", -- "Spin", "Jitter", "Static"
+    antiAimMode = "Spin", 
     antiAimSpeed = 50,
     antiAimKey = Enum.KeyCode.Unknown,
     antiAimKeyMode = "Toggle",
     
-    -- Anti-AFK Settings
+    
     antiAfkEnabled = false,
-    antiAfkInterval = 15, -- Minutes
+    antiAfkInterval = 15, 
     antiAfkLastActionTime = tick(),
     
-    -- Ballistics Settings (Not in GUI as requested)
+    
     ballisticsEnabled = true,
-    bulletVelocity = 1000, -- Studs per second
-    gravity = 196.2, -- Roblox gravity
-    predictionFactor = 0.500, -- For movement prediction
-    predictionIterations = 20, -- Iterations for ballistics accuracy
-    hitscanVelocityThreshold = 800, -- Above this velocity gravity isn't applied to aiming
+    bulletVelocity = 1000, 
+    gravity = 196.2, 
+    predictionFactor = 0.500, 
+    predictionIterations = 20, 
+    hitscanVelocityThreshold = 800, 
     espEnabled = true,
     espDrawTeammates = false,
     espHighlights = false,
@@ -95,17 +95,17 @@ local Settings = {
     espHealthBarBaseDistance = 25,
     espHealthBarMinScale = 0.4,
     espHealthBarMaxScale = 1.0,
-    espMaxDistance = 700, --gamemable
+    espMaxDistance = 700, 
     espTextColor = Color3.fromRGB(255, 255, 255),
-    espChamsMode = "Default", -- "Default", "Glow", "Metal", "Neon"
+    espChamsMode = "Default", 
     espColor = Color3.fromRGB(255, 255, 255),
     espOutlineColor = Color3.fromRGB(255, 255, 255),
     espSkeletonColor = Color3.fromRGB(255, 255, 255),
     
-    -- Bullet Tracer Settings
+    
     bulletTracerEnabled = true,
-    bulletTracerColor = Color3.fromRGB(105, 0, 198), -- Viol by default
-    bulletTracerDuration = 2, -- Seconds
+    bulletTracerColor = Color3.fromRGB(105, 0, 198), 
+    bulletTracerDuration = 2, 
     bulletTracerThickness = 0.5,
     bulletTracerPhysics = true,
 
@@ -113,14 +113,14 @@ local Settings = {
     noGrassEnabled = false,
     noFogEnabled = false,
 
-    -- Crosshair Settings
+    
     crosshairEnabled = false,
     crosshairType = "Swastika",
     crosshairColor = Color3.fromRGB(255, 0, 0),
     crosshairSize = 10,
     crosshairThickness = 1,
 
-    -- GUI Settings
+    
     guiVisible = true,
     watermarkEnabled = true,
     toggleKey = Enum.KeyCode.RightShift,

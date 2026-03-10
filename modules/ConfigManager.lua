@@ -25,7 +25,7 @@ function ConfigManager.Serialize(settings)
         elseif typeof(v) == "EnumItem" then
             serialized[k] = {Type = "EnumItem", Enum = tostring(v.EnumType), Value = v.Name}
         elseif type(v) == "table" and k == "crosshairSettings" then
-            -- Special case for crosshair settings table if it exists
+            
             serialized[k] = v
         elseif type(v) ~= "function" and type(v) ~= "table" then
             serialized[k] = v
@@ -82,7 +82,7 @@ function ConfigManager.List()
         local files = listfiles(ConfigManager.Folder)
         local configs = {}
         for _, file in ipairs(files) do
-            -- Extract filename without path and extension
+            
             local name = file:match("([^/\\]+)%.json$")
             if name then
                 table.insert(configs, name)

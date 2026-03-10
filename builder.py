@@ -4,13 +4,13 @@ import random
 import string
 import hashlib
 
-# Настройки
+
 ENTRY_POINT = 'Main.lua'
 MODULES_DIR = 'modules'
 OUTPUT_FILE = 'bundle.lua'
 OBFUSCATE = False
 
-# Obfuscation functions (disabled)
+
 def get_name(original):
     return f'"{original}"'
 
@@ -22,7 +22,7 @@ def remove_comments(content):
     length = len(content)
     
     while i < length:
-        # Пропускаем строки и многострочные комментарии
+        
         if content[i] == '"' or content[i] == "'":
             quote_char = content[i]
             result.append(content[i])
@@ -69,9 +69,9 @@ def build():
                 rel_path = os.path.relpath(file_path, MODULES_DIR)
                 module_name = rel_path[:-4].replace('\\', '/')
                 
-                # Пропускаем WithoniumRTY, так как он грузится с сервера
-                # if module_name == 'WithoniumRTY':
-                    # continue
+                
+                
+                    
                     
                 with open(file_path, 'r', encoding='utf-8') as f:
                     module_contents[module_name] = remove_comments(f.read())
@@ -96,7 +96,7 @@ def build():
         ""
     ]
 
-    # 1. Собираем все модули
+    
     for name, content in module_contents.items():
         module_path = f"modules/{name}"
         module_wrapper = [
@@ -107,7 +107,7 @@ def build():
         ]
         bundle_content.extend(module_wrapper)
 
-    # 2. Добавляем функцию имитации require
+    
     bundle_content.extend([
         "_require = function(p)",
         "    if _cache[p] then return _cache[p] end",
@@ -125,7 +125,7 @@ def build():
         ""
     ])
 
-    # 3. Инициализация модулей и запуск Main
+    
     bundle_content.extend([
         "local Modules = {",
         '    ["Settings"] = _require("modules/Settings"),',
@@ -149,10 +149,10 @@ def build():
         "    pcall(function() Main.Init(Modules) end)",
         "end"
     ])
-    # Удаляем комменатрии и табы/пробелы которые были за ними
+    
     bundle_content = [line.lstrip() for line in bundle_content if not line.startswith('--')]
 
-    # Записываем результат
+    
     with open(OUTPUT_FILE, 'w', encoding='utf-8') as f:
         f.write('\n'.join(bundle_content))
 

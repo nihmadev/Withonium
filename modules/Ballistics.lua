@@ -1,6 +1,6 @@
 local Ballistics = {}
 
--- Comprehensive list of attributes/values to check for weapon stats
+
 local VELOCITY_NAMES = {"MuzzleVelocity", "Velocity", "Speed", "ProjectileSpeed", "BulletSpeed", "ShootVelocity", "ProjectileVelocity"}
 local GRAVITY_NAMES = {"Gravity", "BulletGravity", "Drop", "ProjectileGravity", "BulletDrop", "ProjectileDrop", "Acceleration"}
 
@@ -12,7 +12,7 @@ function Ballistics.GetWeaponFromTool(tool)
         gravity = nil
     }
     
-    -- 1. Try to find attributes (Modern way)
+    
     for _, name in ipairs(VELOCITY_NAMES) do
         local val = tool:GetAttribute(name)
         if val and type(val) == "number" and val > 0 then
@@ -29,7 +29,7 @@ function Ballistics.GetWeaponFromTool(tool)
         end
     end
     
-    -- 2. Try to find values inside the tool
+    
     if not stats.velocity or not stats.gravity then
         for _, v in ipairs(tool:GetChildren()) do
             if v:IsA("ValueBase") then
@@ -54,7 +54,7 @@ function Ballistics.GetWeaponFromTool(tool)
         end
     end
     
-    -- 3. Try to find in a 'Settings' or 'Config' module/folder
+    
     if not stats.velocity or not stats.gravity then
         local config = tool:FindFirstChild("Settings") or tool:FindFirstChild("Config") or tool:FindFirstChild("Configuration") or tool:FindFirstChild("GunSettings")
         if config then
@@ -104,7 +104,7 @@ function Ballistics.GetWeaponFromTool(tool)
         end
     end
 
-    -- 4. Check for FastCast specific structure
+    
     if not stats.velocity or not stats.gravity then
         local fastCastData = tool:FindFirstChild("FastCastSettings")
         if fastCastData and fastCastData:IsA("ModuleScript") then
@@ -116,7 +116,7 @@ function Ballistics.GetWeaponFromTool(tool)
         end
     end
 
-    -- 5. Deep search for any ValueBase that might be velocity/gravity (Throttled)
+    
     if not stats.velocity or not stats.gravity then
         for _, v in ipairs(tool:GetDescendants()) do
             if v:IsA("ValueBase") then
@@ -135,13 +135,13 @@ function Ballistics.GetWeaponFromTool(tool)
         end
     end
 
-    -- Final sanity checks
+    
     if stats.velocity and type(stats.velocity) == "number" then
         if stats.velocity <= 0 then stats.velocity = nil end
     end
     
     if stats.gravity and type(stats.gravity) == "number" then
-        -- Gravity can be negative in some engines, but we want the magnitude for prediction
+        
         stats.gravity = math.abs(stats.gravity)
     end
 
@@ -152,7 +152,7 @@ function Ballistics.GetConfig()
     local player = game:GetService("Players").LocalPlayer
     local tool = player and player.Character and player.Character:FindFirstChildWhichIsA("Tool")
     
-    -- Priority 1: Dynamic detection from the current tool
+    
     if tool then
         local dynamicStats = Ballistics.GetWeaponFromTool(tool)
         if dynamicStats then
@@ -163,10 +163,10 @@ function Ballistics.GetConfig()
         end
     end
     
-    -- Priority 2: Generic defaults based on tool name (REMOVED TO AVOID INCORRECT HARDCODING)
-    -- User should configure settings manually if auto-detection fails
     
-    -- Priority 3: Return nil to let Prediction use Settings values
+    
+    
+    
     return nil
 end
 

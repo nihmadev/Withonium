@@ -2,7 +2,7 @@ local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
--- Функция загрузки библиотеки с таймаутом
+
 local function loadWithTimeout(url: string, timeout: number?): ...any
 	if type(url) ~= "string" then return false, "URL must be a string" end
 	url = url:gsub("^%s*(.-)%s*$", "%1")
@@ -15,7 +15,7 @@ local function loadWithTimeout(url: string, timeout: number?): ...any
 	local requestThread = task.spawn(function()
 		local fetchSuccess, fetchResult
 		
-		-- Use executor's request if available
+		
 		local requestFunc = (syn and syn.request) or (fluxus and fluxus.request) or (http and http.request) or http_request or request
 		if requestFunc then
 			fetchSuccess, fetchResult = pcall(function()
@@ -29,7 +29,7 @@ local function loadWithTimeout(url: string, timeout: number?): ...any
 				error(res and ("HTTP " .. tostring(res.StatusCode)) or "Unknown error!")
 			end)
 		else
-			-- Fallback to HttpGet with retry
+			
 			for i = 1, 3 do
 				fetchSuccess, fetchResult = pcall(function()
 					return game:HttpGet(url)
@@ -67,7 +67,7 @@ local function loadWithTimeout(url: string, timeout: number?): ...any
 end
 
 local function loadLibrary(): any
-    	-- Сначала пробуем локальный файл
+    	
 	local success, result = pcall(function()
 		if isfile("WithoniumRTY.lua") then
 			local content = readfile("WithoniumRTY.lua")
@@ -149,7 +149,7 @@ local GUI = {
     ConfigName = "shlepa228",
     CurrentTab = "Aimbot",
     
-    -- Watermark and Keybinds
+    
     Watermark = {
         Frame = nil,
         Text = nil,
@@ -163,16 +163,16 @@ local GUI = {
     FrameCount = 0,
     LastWatermarkUpdate = 0,
 
-    -- UI Elements for synchronization
+    
     Elements = {
         Toggles = {}
     },
 
-    -- Mock ScreenGui for Main.Unload compatibility
+    
     ScreenGui = nil
 }
 
--- Helper function to safely get name from KeyCode or UserInputType
+
 local function getKeyName(key)
     if not key then return "None" end
     local str = tostring(key)
@@ -181,18 +181,18 @@ local function getKeyName(key)
     return str
 end
 
--- Helper function to safely set keybind from WithoniumRTY callback
+
 local function setKeybind(Key, Settings, SettingName)
     if not Key then return end
     
-    -- First try KeyCode
+    
     local success, result = pcall(function() return Enum.KeyCode[Key] end)
     if success and result then
         Settings[SettingName] = result
         return
     end
     
-    -- Then try UserInputType (for MouseButtons)
+    
     success, result = pcall(function() return Enum.UserInputType[Key] end)
     if success and result then
         Settings[SettingName] = result
@@ -203,7 +203,7 @@ function GUI.Init(Settings, Utils, UnloadCallback, ConfigManager, ItemSpawner)
     GUI.ConfigManager = ConfigManager
     GUI.UnloadCallback = UnloadCallback
     
-    -- Create ScreenGui for Watermark/Keybinds
+    
     local gui_parent = nil
     pcall(function()
         if gethui then gui_parent = gethui()
@@ -217,9 +217,9 @@ function GUI.Init(Settings, Utils, UnloadCallback, ConfigManager, ItemSpawner)
         GUI.ScreenGui.ResetOnSpawn = false
         GUI.ScreenGui.DisplayOrder = 100
         GUI.ScreenGui.Parent = gui_parent
-        GUI.ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Global -- Use Global to avoid sibling issues with ipairs if any
+        GUI.ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Global 
 
-        -- Watermark
+        
         GUI.Watermark.Frame = Instance.new("Frame")
         GUI.Watermark.Frame.Name = "Watermark"
         GUI.Watermark.Frame.Parent = GUI.ScreenGui
@@ -266,7 +266,7 @@ function GUI.Init(Settings, Utils, UnloadCallback, ConfigManager, ItemSpawner)
         GUI.Watermark.Text.Text = "Withonium | Initializing..."
         GUI.Watermark.Text.Parent = GUI.Watermark.Frame
 
-        -- Keybind List
+        
         GUI.KeybindList.Frame = Instance.new("Frame")
         GUI.KeybindList.Frame.Name = "KeybindList"
         GUI.KeybindList.Frame.Parent = GUI.ScreenGui
@@ -337,7 +337,7 @@ function GUI.Init(Settings, Utils, UnloadCallback, ConfigManager, ItemSpawner)
         KeySystem = false
     })
 
-    -- Aimbot Tab (rbxassetid://9134785384)
+    
     local AimbotTab = GUI.Window:CreateTab("Aimbot", 9134785384)
     local AimbotMain, AimbotSide = AimbotTab:Split(0.5)
     
@@ -574,7 +574,7 @@ function GUI.Init(Settings, Utils, UnloadCallback, ConfigManager, ItemSpawner)
         Callback = function(Option) Settings.targetPart = Option[1] end
     })
 
-    -- Visuals Tab (rbxassetid://9134780101)
+    
     local VisualsTab = GUI.Window:CreateTab("Visuals", 9134780101)
     local VisualsMain, VisualsSide = VisualsTab:Split(0.5)
     
@@ -792,7 +792,7 @@ function GUI.Init(Settings, Utils, UnloadCallback, ConfigManager, ItemSpawner)
         Callback = function(Key) setKeybind(Key, Settings, "FullBrightKey") end
     })
 
-    -- Player Tab (rbxassetid://10747373176)
+    
     local PlayerTab = GUI.Window:CreateTab("Player", 10747373176)
     local PlayerMain, PlayerSide = PlayerTab:Split(0.5)
     
@@ -940,7 +940,7 @@ function GUI.Init(Settings, Utils, UnloadCallback, ConfigManager, ItemSpawner)
         Flag = "antiAfkInterval",
         Callback = function(Value) Settings.antiAfkInterval = Value end
     })
-    -- Item Spawner
+    
     if ItemSpawner then
         PlayerSide:CreateSection("Item Spawner")
         
@@ -968,7 +968,7 @@ function GUI.Init(Settings, Utils, UnloadCallback, ConfigManager, ItemSpawner)
             fStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
             fStroke.Parent = frame
             
-            -- Make draggable
+            
             local dragging, dragInput, dragStart, startPos
             local function update(input)
                 local delta = input.Position - dragStart
@@ -990,7 +990,7 @@ function GUI.Init(Settings, Utils, UnloadCallback, ConfigManager, ItemSpawner)
                 end
             end)
             
-            -- Header
+            
             local header = Instance.new("TextLabel")
             header.Size = UDim2.new(1, -40, 0, 40)
             header.Position = UDim2.new(0, 15, 0, 0)
@@ -1015,7 +1015,7 @@ function GUI.Init(Settings, Utils, UnloadCallback, ConfigManager, ItemSpawner)
                 frame.Visible = false
             end)
             
-            -- Search Bar
+            
             local searchContainer = Instance.new("Frame")
             searchContainer.Size = UDim2.new(1, -30, 0, 36)
             searchContainer.Position = UDim2.new(0, 15, 0, 45)
@@ -1064,7 +1064,7 @@ function GUI.Init(Settings, Utils, UnloadCallback, ConfigManager, ItemSpawner)
             grid.Parent = scroll
             
             local function populate(filter)
-                -- Clear old
+                
                 for _, v in ipairs(scroll:GetChildren()) do
                     if v:IsA("Frame") or v:IsA("ImageButton") then v:Destroy() end
                 end
@@ -1096,7 +1096,7 @@ function GUI.Init(Settings, Utils, UnloadCallback, ConfigManager, ItemSpawner)
                         btn.MouseButton1Click:Connect(function()
                             local success = ItemSpawner.Give(item)
                             
-                            -- Visual feedback
+                            
                             local originalColor = btn.BackgroundColor3
                             if success then
                                 btn.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
@@ -1109,12 +1109,12 @@ function GUI.Init(Settings, Utils, UnloadCallback, ConfigManager, ItemSpawner)
                     end
                 end
                 
-                -- Update CanvasSize
+                
                 local count = 0
                 for _, v in ipairs(scroll:GetChildren()) do
                      if v:IsA("ImageButton") then count = count + 1 end
                 end
-                local rows = math.ceil(count / 5) -- assuming 5 per row roughly
+                local rows = math.ceil(count / 5) 
                 scroll.CanvasSize = UDim2.new(0, 0, 0, rows * 95)
             end
             
@@ -1140,8 +1140,8 @@ function GUI.Init(Settings, Utils, UnloadCallback, ConfigManager, ItemSpawner)
             Callback = function()
                 ItemSpawner.ScanItems()
                 local win = createSpawnerWindow()
-                -- force refresh logic if needed, currently populate is called on create
-                -- we might need to expose populate or just destroy and recreate
+                
+                
                 win:Destroy()
                 spawnerWindow = nil
                 local newWin = createSpawnerWindow()
@@ -1219,7 +1219,7 @@ function GUI.UpdateConfigList(ConfigsSide, Settings)
     
     ConfigsSide:CreateSection("Config Actions")
     
-    -- Add Load and Delete buttons at the top
+    
     ConfigsSide:CreateButton({
         Name = "Load Selected",
         Callback = function()

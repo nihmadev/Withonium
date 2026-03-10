@@ -68,11 +68,11 @@ function Healthbars.Update(player, character, rootPart, humanoid, Settings, isWi
             local lengthPx = math.max(1, math.floor(baseLength * scale + 0.5))
             local thicknessPx = math.max(1, math.floor(baseThickness * scale + 0.5))
             
-            -- Health Color (Green -> Red)
+            
             local color = Color3.fromHSV(healthPercent * 0.3, 1, 1)
             fill.BackgroundColor3 = color
             
-            -- Text Update
+            
             if Settings.espHealthBarText then
                 text.Visible = true
                 text.Text = math.floor(humanoid.Health)
@@ -80,7 +80,7 @@ function Healthbars.Update(player, character, rootPart, humanoid, Settings, isWi
                 text.Visible = false
             end
             
-            -- Layout logic based on position
+            
             if position == "Left" then
                 bbg.Size = UDim2.new(0, thicknessPx, 0, lengthPx)
                 bbg.StudsOffset = Vector3.new(-2.5, 0, 0)

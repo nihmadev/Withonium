@@ -36,7 +36,7 @@ function Skeleton.Draw(player, character, Settings)
     local isR15 = character:FindFirstChild("UpperTorso") ~= nil
     local bones = isR15 and R15_BONES or R6_BONES
 
-    -- Clear extra lines if type changed
+    
     if #skeleton > #bones then
         for i = #bones + 1, #skeleton do
             skeleton[i]:Destroy()

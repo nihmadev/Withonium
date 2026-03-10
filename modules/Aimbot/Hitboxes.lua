@@ -3,15 +3,15 @@ local LocalPlayer = Players.LocalPlayer
 
 local Hitboxes = {
     lastHitboxUpdate = 0,
-    OriginalProperties = {}, -- Cache for original part properties
-    ModifiedParts = {} -- Tracks parts modified in the current session
+    OriginalProperties = {}, 
+    ModifiedParts = {} 
 }
 
 function Hitboxes.UpdateHitboxes(Aimbot, Settings, Utils, ESP)
     if not Settings or not ESP then return end
     
     local now = tick()
-    if now - Hitboxes.lastHitboxUpdate < 0.15 then return end -- Slightly faster update
+    if now - Hitboxes.lastHitboxUpdate < 0.15 then return end 
     Hitboxes.lastHitboxUpdate = now
     
     local function restorePart(part)
@@ -43,13 +43,13 @@ function Hitboxes.UpdateHitboxes(Aimbot, Settings, Utils, ESP)
     local size = Settings.hitboxExpanderSize or 5
     local targetSize = Vector3.new(size, size, size)
     
-    -- Main Update Loop
+    
     for _, player in ipairs(Players:GetPlayers()) do
         if player ~= LocalPlayer and player.Character then
             local character = player.Character
             local rootPart = character:FindFirstChild("HumanoidRootPart") or character:FindFirstChild("Middle") or character:FindFirstChild("Torso")
             
-            -- Don't process players too far away to save CPU
+            
             if not rootPart or (rootPart.Position - workspace.CurrentCamera.CFrame.Position).Magnitude > 500 then
                 continue 
             end
@@ -69,26 +69,26 @@ function Hitboxes.UpdateHitboxes(Aimbot, Settings, Utils, ESP)
                     }
                 end
                 
-                -- Only apply if properties are different to minimize C++ bridge calls (lag source)
+                
                 if part.Size ~= targetSize then
                     part.Size = targetSize
-                    part.CanCollide = false -- Still false for physics, but...
-                    part.CanTouch = true -- ...KEEP CanTouch true for damage registration!
-                    part.Massless = true -- Prevent heavy hitboxes from breaking character physics
+                    part.CanCollide = false 
+                    part.CanTouch = true 
+                    part.Massless = true 
                 end
 
-                -- Visuals: "80% Transparent Skin" effect
+                
                 if Settings.hitboxExpanderShow then
                     part.Transparency = 0.8
                     
-                    -- Optional subtle outline if requested (current code has SelectionBox)
+                    
                     local selection = part:FindFirstChild("HitboxVisual")
                     if not selection then
                         selection = Instance.new("SelectionBox")
                         selection.Name = "HitboxVisual"
                         selection.LineThickness = 0.02
                         selection.Adornee = part
-                        selection.Color3 = Color3.fromRGB(255, 255, 255) -- White subtle outline
+                        selection.Color3 = Color3.fromRGB(255, 255, 255) 
                         selection.Transparency = 0.7
                         selection.Parent = part
                     end
@@ -102,12 +102,12 @@ function Hitboxes.UpdateHitboxes(Aimbot, Settings, Utils, ESP)
         end
     end
     
-    -- Optimized Cleanup: Only check a subset of parts or when count is high
-    -- This prevents the "freeze" by not iterating through hundreds of parts every frame
+    
+    
     local count = 0
     for part, props in pairs(Hitboxes.OriginalProperties) do
         count = count + 1
-        -- Only check every 5th update for cleanup to save CPU, or if we have too many parts
+        
         if count % 3 == 0 or count > 50 then 
             local char = part and part.Parent
             local humanoid = char and char:FindFirstChildOfClass("Humanoid")

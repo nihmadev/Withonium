@@ -5772,9 +5772,9 @@ function Main.Init(Modules)
     local Crosshair = Modules.Crosshair
     local ItemSpawner = Modules.ItemSpawner
 
-    -- Async initialization to prevent hanging
+    
     task.spawn(function()
-        -- Initialize ConfigManager
+        
         if ConfigManager then
             pcall(function()
                 ConfigManager.Init()
@@ -5782,22 +5782,22 @@ function Main.Init(Modules)
             end)
         end
 
-        -- Initialize Visuals
+        
         if Visuals then
             pcall(function() Visuals.Init(Settings) end)
         end
 
-        -- Initialize Crosshair
+        
         if Crosshair then
             pcall(function() Crosshair.Init() end)
         end
 
-        -- Initialize ItemSpawner
+        
         if ItemSpawner then
              pcall(function() ItemSpawner.ScanItems() end)
         end
 
-        -- Initialize GUI
+        
         local success_gui, err_gui = pcall(function()
             GUI.Init(Settings, Utils, function()
                 Main.Unload()
@@ -5810,18 +5810,18 @@ function Main.Init(Modules)
         log("Finalizing engine...")
     end)
 
-    -- Set initial cursor state
+    
     UserInputService.MouseIconEnabled = Settings.guiVisible
 
 
 
-    -- Function Keybind Handling
+    
     local function handleKeybind(input, isBegan, processed)
         if processed then return end
         local keyCode = input.KeyCode
         local inputType = input.UserInputType
         
-        -- Ignore input if typing in a TextBox
+        
         if UserInputService:GetFocusedTextBox() then return end
         
         local keybinds = {
@@ -5859,7 +5859,7 @@ function Main.Init(Modules)
             end
         end
         
-        -- Refresh GUI if state changed and it's visible
+        
         if updated and Settings.guiVisible and GUI then
             if GUI.UpdateToggles then
                 GUI.UpdateToggles(Settings)
@@ -5867,7 +5867,7 @@ function Main.Init(Modules)
         end
     end
 
-    -- Toggle GUI Visibility
+    
     table.insert(Main.Connections, UserInputService.InputBegan:Connect(function(input, processed)
         if not processed and (input.KeyCode == Settings.toggleKey or input.UserInputType == Settings.toggleKey) then
             if GUI and GUI.ToggleVisible then
@@ -5882,12 +5882,12 @@ function Main.Init(Modules)
                     UserInputService.MouseBehavior = Enum.MouseBehavior.Default
                 else
                     UserInputService.MouseIconEnabled = false
-                    -- Restore mouse behavior for FPS games
+                    
                     UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
                 end
             end)
         end
-        -- We handle processed ourselves for function keybinds (except for toggleKey)
+        
         handleKeybind(input, true, processed)
     end))
 
@@ -5895,13 +5895,13 @@ function Main.Init(Modules)
         handleKeybind(input, false, processed)
     end))
 
-    -- Main Loop
+    
     local lastGuiUpdate = 0
     local lastVisualsUpdate = 0
     local lastErrorTime = 0
     
     RunService:BindToRenderStep("WithoniumUpdate", Enum.RenderPriority.Camera.Value + 1, function(deltaTime)
-        -- Aimbot must run every frame for smoothness
+        
         local success_aim, err_aim = pcall(function()
             Aimbot.Update(deltaTime, Settings, Utils, Ballistics, ESP)
         end)
@@ -5912,8 +5912,8 @@ function Main.Init(Modules)
             end
         end
 
-        -- ESP can run at slightly lower frequency (e.g. 30-60 FPS)
-        -- Throttling is handled inside ESP.Update itself now
+        
+        
         local success_esp, err_esp = pcall(function()
             ESP.Update(Settings, deltaTime, Utils)
         end)
@@ -5926,7 +5926,7 @@ function Main.Init(Modules)
         
         local now = tick()
         
-        -- Visuals (FullBright etc) don't need to check every frame
+        
         if now - lastVisualsUpdate > 0.5 then
             lastVisualsUpdate = now
             if Visuals then
@@ -5934,17 +5934,17 @@ function Main.Init(Modules)
             end
         end
 
-        -- Crosshair update
+        
         if Crosshair then
             pcall(function() Crosshair.Update(Settings) end)
         end
         
-        -- Watermark update must be called every frame to count FPS correctly
+        
         if GUI and GUI.UpdateWatermark then
             pcall(function() GUI.UpdateWatermark(Settings) end)
         end
         
-        -- Other GUI elements update (Keybinds) - very slow if done every frame
+        
         if now - lastGuiUpdate > 0.1 then
             lastGuiUpdate = now
             if GUI then
@@ -5957,16 +5957,16 @@ function Main.Init(Modules)
         end
     end)
 
-    -- Initialize Hooks LAST to ensure everything else is ready
+    
     task.spawn(function()
-        task.wait(1) -- Extra safety delay
+        task.wait(1) 
         log("Activating hooks...")
         pcall(function()
             Aimbot.InitHooks(Settings, Utils, Ballistics, BulletTracer)
         end)
     end)
 
-    -- Cleanup on player removing
+    
     table.insert(Main.Connections, Players.PlayerRemoving:Connect(function(player)
         ESP.Remove(player)
     end))
@@ -5976,7 +5976,7 @@ function Main.Unload()
     local Settings = Main.Modules.Settings
     local ConfigManager = Main.Modules.ConfigManager
 
-    -- Auto-save settings
+    
     if ConfigManager and Settings then
         ConfigManager.Save("autoload", Settings)
     end
@@ -6015,7 +6015,7 @@ function Main.Unload()
         Main.Modules.Crosshair.Unload()
     end
 
-    -- Restore mouse
+    
     UserInputService.MouseIconEnabled = true
     UserInputService.MouseBehavior = Enum.MouseBehavior.Default
 end
