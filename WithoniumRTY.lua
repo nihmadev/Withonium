@@ -1803,30 +1803,33 @@ local function setVisibility(visibility: boolean, notify: boolean?)
 		
 		if not getAsset then return nil end
 
-		local success, exists = pcall(function() return isfile(fileName) end)
-		if not success or not exists then
-			local downloadSuccess = pcall(function()
-				local requestFunc = (syn and syn.request) or (fluxus and fluxus.request) or (http and http.request) or http_request or request
-				local body
-				if requestFunc then
-					local res = requestFunc({
-						Url = url,
-						Method = "GET"
-					})
-					if res and res.StatusCode == 200 then
-						body = res.Body
-					end
-				else
-					body = game:HttpGet(url)
+		-- Helper to download content
+		local function download(targetUrl)
+			local requestFunc = (syn and syn.request) or (fluxus and fluxus.request) or (http and http.request) or http_request or request
+			if requestFunc then
+				local success, res = pcall(function()
+					return requestFunc({Url = targetUrl, Method = "GET"})
+				end)
+				if success and res and typeof(res) == "table" and res.StatusCode == 200 then
+					return res.Body
 				end
-				
-				if body and #body > 0 then
-					writefile(fileName, body)
-					return true
+			end
+			local success, body = pcall(game.HttpGet, game, targetUrl)
+			return if success then body else nil
+		end
+
+		-- Logic to handle updates: 
+		-- We use getgenv() to check if we've already checked for updates in THIS session.
+		-- This prevents lag on every re-execution but allows update after game restart.
+		if not _G.WithoniumLogoChecked then
+			local body = download(url)
+			if body and #body > 0 then
+				local success, localBody = pcall(readfile, fileName)
+				if not success or localBody ~= body then
+					pcall(writefile, fileName, body)
 				end
-				return false
-			end)
-			if not downloadSuccess then return nil end
+			end
+			_G.WithoniumLogoChecked = true
 		end
 		
 		local assetId

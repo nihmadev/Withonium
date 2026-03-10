@@ -3,15 +3,15 @@ local LocalPlayer = Players.LocalPlayer
 
 local Hitboxes = {
     lastHitboxUpdate = 0,
-    OriginalProperties = {}, 
-    ModifiedParts = {} 
+    OriginalProperties = setmetatable({}, {__mode = "k"}), -- Weak table for automatic cleanup
+    CleanupIndex = 1
 }
 
 function Hitboxes.UpdateHitboxes(Aimbot, Settings, Utils, ESP)
     if not Settings or not ESP then return end
     
     local now = tick()
-    if now - Hitboxes.lastHitboxUpdate < 0.15 then return end 
+    if now - Hitboxes.lastHitboxUpdate < 0.2 then return end 
     Hitboxes.lastHitboxUpdate = now
     
     local function restorePart(part)
@@ -19,11 +19,13 @@ function Hitboxes.UpdateHitboxes(Aimbot, Settings, Utils, ESP)
         local props = Hitboxes.OriginalProperties[part]
         if props then
             pcall(function()
-                part.Size = props.Size
-                part.Transparency = props.Transparency
-                part.CanCollide = props.CanCollide
-                part.CanTouch = props.CanTouch
-                part.Massless = props.Massless
+                if part.Parent then
+                    part.Size = props.Size
+                    part.Transparency = props.Transparency
+                    part.CanCollide = props.CanCollide
+                    part.CanTouch = props.CanTouch
+                    part.Massless = props.Massless
+                end
                 local visual = part:FindFirstChild("HitboxVisual")
                 if visual then visual:Destroy() end
             end)
@@ -40,24 +42,28 @@ function Hitboxes.UpdateHitboxes(Aimbot, Settings, Utils, ESP)
         return
     end
     
+    local camera = workspace.CurrentCamera
+    if not camera then return end
+    
     local size = Settings.hitboxExpanderSize or 5
     local targetSize = Vector3.new(size, size, size)
+    local camPos = camera.CFrame.Position
+    local maxDist = Settings.espMaxDistance or 500
     
-    
+    -- Main loop
     for _, player in ipairs(Players:GetPlayers()) do
         if player ~= LocalPlayer and player.Character then
             local character = player.Character
-            local rootPart = character:FindFirstChild("HumanoidRootPart") or character:FindFirstChild("Middle") or character:FindFirstChild("Torso")
+            local rootPart = character:FindFirstChild("HumanoidRootPart") or character:FindFirstChild("Torso") or character:FindFirstChild("UpperTorso")
             
-            
-            if not rootPart or (rootPart.Position - workspace.CurrentCamera.CFrame.Position).Magnitude > 500 then
+            if not rootPart or (rootPart.Position - camPos).Magnitude > maxDist then
                 continue 
             end
 
-            local parts = Utils.getAllBodyParts(character, Settings.targetPart)
+            local parts = Utils.getAllBodyParts(character, Settings.targetPart or "Head")
             
             for _, part in ipairs(parts) do
-                if part.Name == "HumanoidRootPart" then continue end
+                if not part or not part:IsA("BasePart") or part.Name == "HumanoidRootPart" then continue end
                 
                 if not Hitboxes.OriginalProperties[part] then
                     Hitboxes.OriginalProperties[part] = {
@@ -69,54 +75,62 @@ function Hitboxes.UpdateHitboxes(Aimbot, Settings, Utils, ESP)
                     }
                 end
                 
-                
+                -- Only apply if different to avoid constant property setting (lag source)
                 if part.Size ~= targetSize then
-                    part.Size = targetSize
-                    part.CanCollide = false 
-                    part.CanTouch = true 
-                    part.Massless = true 
+                    pcall(function()
+                        part.Size = targetSize
+                        part.CanCollide = false 
+                        part.CanTouch = true 
+                        part.Massless = true 
+                    end)
                 end
 
-                
                 if Settings.hitboxExpanderShow then
-                    part.Transparency = 0.8
-                    
+                    if part.Transparency ~= 0.8 then
+                        part.Transparency = 0.8
+                    end
                     
                     local selection = part:FindFirstChild("HitboxVisual")
                     if not selection then
                         selection = Instance.new("SelectionBox")
                         selection.Name = "HitboxVisual"
-                        selection.LineThickness = 0.02
+                        selection.LineThickness = 0.01
                         selection.Adornee = part
                         selection.Color3 = Color3.fromRGB(255, 255, 255) 
-                        selection.Transparency = 0.7
+                        selection.Transparency = 0.8
                         selection.Parent = part
                     end
                     selection.Visible = true
                 else
                     local selection = part:FindFirstChild("HitboxVisual")
                     if selection then selection.Visible = false end
-                    part.Transparency = Hitboxes.OriginalProperties[part].Transparency
+                    
+                    local orig = Hitboxes.OriginalProperties[part]
+                    if orig and part.Transparency ~= orig.Transparency then
+                        part.Transparency = orig.Transparency
+                    end
                 end
             end
         end
     end
     
-    
-    
+    -- Incremental Cleanup (Robust)
     local count = 0
     for part, props in pairs(Hitboxes.OriginalProperties) do
         count = count + 1
-        
-        if count % 3 == 0 or count > 50 then 
-            local char = part and part.Parent
-            local humanoid = char and char:FindFirstChildOfClass("Humanoid")
-            
-            if not part or not char or not char.Parent or not humanoid or humanoid.Health <= 0 then
+        if count % 5 == 0 then -- Check every 5th part
+            if not part or not part.Parent or not part.Parent.Parent then
                 restorePart(part)
+            else
+                local humanoid = part.Parent:FindFirstChildOfClass("Humanoid")
+                if not humanoid or humanoid.Health <= 0 then
+                    restorePart(part)
+                end
             end
         end
     end
 end
+
+return Hitboxes
 
 return Hitboxes
