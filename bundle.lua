@@ -4248,14 +4248,16 @@ local LocalPlayer = Players.LocalPlayer
 local Hitboxes = {
     lastHitboxUpdate = 0,
     OriginalProperties = setmetatable({}, {__mode = "k"}), 
-    CleanupIndex = 1
+    CleanupIndex = 1,
+    Connections = {}
 }
 
 function Hitboxes.UpdateHitboxes(Aimbot, Settings, Utils, ESP)
     if not Settings or not ESP then return end
     
     local now = tick()
-    if now - Hitboxes.lastHitboxUpdate < 0.2 then return end 
+    
+    if now - Hitboxes.lastHitboxUpdate < 0.1 then return end 
     Hitboxes.lastHitboxUpdate = now
     
     local function restorePart(part)
@@ -4274,9 +4276,6 @@ function Hitboxes.UpdateHitboxes(Aimbot, Settings, Utils, ESP)
                         part.Shape = props.Shape or Enum.PartType.Block
                     end
                 end
-                
-                local visual = part:FindFirstChild("HitboxVisual")
-                if visual then visual:Destroy() end
             end)
             Hitboxes.OriginalProperties[part] = nil
         end
@@ -4293,19 +4292,16 @@ function Hitboxes.UpdateHitboxes(Aimbot, Settings, Utils, ESP)
     
     local size = Settings.hitboxExpanderSize or 5
     local targetSize = Vector3.new(size, size, size)
-    local maxDist = Settings.espMaxDistance or 500
     local camPos = workspace.CurrentCamera.CFrame.Position
-    
     
     local allPlayers = Players:GetPlayers()
     for i = 1, #allPlayers do
         local player = allPlayers[i]
         if player == LocalPlayer then continue end
         
-        
         local character = Utils.getCharacter(player)
-        if not character then continue end
         
+        if not character then continue end
         
         local rootPart = character:FindFirstChild("HumanoidRootPart") 
             or character:FindFirstChild("Torso") 
@@ -4315,13 +4311,11 @@ function Hitboxes.UpdateHitboxes(Aimbot, Settings, Utils, ESP)
         
         if not rootPart then continue end
         
-        
         local distance = (rootPart.Position - camPos).Magnitude
-        if distance > 2000 then 
+        if distance > 2500 then 
             continue 
         end
 
-        
         local targetParts = {}
         local partSelection = Settings.targetPart or "Head"
         
@@ -4333,12 +4327,9 @@ function Hitboxes.UpdateHitboxes(Aimbot, Settings, Utils, ESP)
             targetParts = Utils.getAllBodyParts(character, partSelection)
         end
         
-        
-        
         for j = 1, #targetParts do
             local part = targetParts[j]
             if not part or not part:IsA("BasePart") or part.Name == "HumanoidRootPart" then continue end
-            
             
             if not Hitboxes.OriginalProperties[part] then
                 Hitboxes.OriginalProperties[part] = {
@@ -4357,7 +4348,7 @@ function Hitboxes.UpdateHitboxes(Aimbot, Settings, Utils, ESP)
                 part.CanCollide = false 
                 part.CanTouch = true 
                 part.Massless = true
-                if part:IsA("Part") then part.Shape = Enum.PartType.Ball end
+                
             end
 
             
@@ -4386,7 +4377,7 @@ function Hitboxes.UpdateHitboxes(Aimbot, Settings, Utils, ESP)
         partsInCache[k] = part
     end
     
-    local cleanupBatchSize = 10
+    local cleanupBatchSize = 20 
     local startIndex = Hitboxes.CleanupIndex or 1
     if startIndex > #partsInCache then startIndex = 1 end
     
