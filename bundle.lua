@@ -3098,7 +3098,7 @@ local Settings = {
     espDistances = true,
     espWeapons = true,
     espIcons = true,
-    espEnemySlots = false,
+    espEnemySlots = true,
     espHealthBar = false,
     espHealthBarText = true,
     espHealthBarPosition = "Left",
@@ -5296,18 +5296,40 @@ function GlobalEnemySlots.Update(Settings, Utils, Aimbot)
     end
     
     
-    local uiSettings = {}
-    for k, v in pairs(Settings) do uiSettings[k] = v end
-    uiSettings.visibleCheckEnabled = false
+    local bestTargetPlayer = nil
+    local minDistance = 200 
+    local camera = workspace.CurrentCamera
+    local screenCenter = camera and camera.ViewportSize / 2 or Vector2.new(0, 0)
     
+    local allPlayers = Players:GetPlayers()
+    for i = 1, #allPlayers do
+        local player = allPlayers[i]
+        if player == LocalPlayer then continue end
+        
+        local character = Utils.getCharacter(player)
+        if not character then continue end
+        
+        local humanoid = character:FindFirstChild("Humanoid")
+        local rootPart = character:FindFirstChild("HumanoidRootPart")
+        
+        if humanoid and humanoid.Health > 0 and rootPart then
+            local pos, onScreen = camera:WorldToViewportPoint(rootPart.Position)
+            if onScreen then
+                local screenDist = (Vector2.new(pos.X, pos.Y) - screenCenter).Magnitude
+                if screenDist < minDistance then
+                    minDistance = screenDist
+                    bestTargetPlayer = player
+                end
+            end
+        end
+    end
     
-    local target = Aimbot.FindTarget(uiSettings, Utils)
-    if not target or not target.player then
+    if not bestTargetPlayer then
         GlobalEnemySlots.Frame.Visible = false
         return
     end
     
-    local player = target.player
+    local player = bestTargetPlayer
     local character = Utils.getCharacter(player)
     if not character then
         GlobalEnemySlots.Frame.Visible = false

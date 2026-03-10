@@ -85,19 +85,41 @@ function GlobalEnemySlots.Update(Settings, Utils, Aimbot)
         return
     end
     
-    -- Clone settings and disable visibility check for UI target finding
-    local uiSettings = {}
-    for k, v in pairs(Settings) do uiSettings[k] = v end
-    uiSettings.visibleCheckEnabled = false
+    -- Find player under cursor (ignoring FOV and walls)
+    local bestTargetPlayer = nil
+    local minDistance = 200 -- Max screen distance for target (lenient)
+    local camera = workspace.CurrentCamera
+    local screenCenter = camera and camera.ViewportSize / 2 or Vector2.new(0, 0)
     
-    -- Use Aimbot.FindTarget to get what the user is looking at (ignoring walls)
-    local target = Aimbot.FindTarget(uiSettings, Utils)
-    if not target or not target.player then
+    local allPlayers = Players:GetPlayers()
+    for i = 1, #allPlayers do
+        local player = allPlayers[i]
+        if player == LocalPlayer then continue end
+        
+        local character = Utils.getCharacter(player)
+        if not character then continue end
+        
+        local humanoid = character:FindFirstChild("Humanoid")
+        local rootPart = character:FindFirstChild("HumanoidRootPart")
+        
+        if humanoid and humanoid.Health > 0 and rootPart then
+            local pos, onScreen = camera:WorldToViewportPoint(rootPart.Position)
+            if onScreen then
+                local screenDist = (Vector2.new(pos.X, pos.Y) - screenCenter).Magnitude
+                if screenDist < minDistance then
+                    minDistance = screenDist
+                    bestTargetPlayer = player
+                end
+            end
+        end
+    end
+    
+    if not bestTargetPlayer then
         GlobalEnemySlots.Frame.Visible = false
         return
     end
     
-    local player = target.player
+    local player = bestTargetPlayer
     local character = Utils.getCharacter(player)
     if not character then
         GlobalEnemySlots.Frame.Visible = false
