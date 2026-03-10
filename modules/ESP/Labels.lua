@@ -27,56 +27,6 @@ function Labels.Update(player, character, rootPart, humanoid, Settings, distance
             layout.SortOrder = Enum.SortOrder.LayoutOrder
             layout.Padding = UDim.new(0, 2)
             
-            local enemySlotsFrame = Instance.new("Frame")
-            enemySlotsFrame.Name = "EnemySlotsFrame"
-            enemySlotsFrame.BackgroundTransparency = 1
-            enemySlotsFrame.Size = UDim2.new(1, 0, 0, 45)
-            enemySlotsFrame.LayoutOrder = 0
-            enemySlotsFrame.Parent = container
-
-            local uiScale = Instance.new("UIScale")
-            uiScale.Name = "UIScale"
-            uiScale.Parent = enemySlotsFrame
-
-            local slotsLayout = Instance.new("UIListLayout")
-            slotsLayout.Parent = enemySlotsFrame
-            slotsLayout.FillDirection = Enum.FillDirection.Horizontal
-            slotsLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-            slotsLayout.VerticalAlignment = Enum.VerticalAlignment.Top
-            slotsLayout.Padding = UDim.new(0, 4)
-
-            for i = 1, 6 do
-                local slot = Instance.new("Frame")
-                slot.Name = "Slot" .. i
-                slot.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-                slot.BackgroundTransparency = 0.5
-                slot.BorderSizePixel = 1
-                slot.Size = UDim2.new(0, 32, 0, 32)
-                slot.Parent = enemySlotsFrame
-
-                local icon = Instance.new("ImageLabel")
-                icon.Name = "Icon"
-                icon.BackgroundTransparency = 1
-                icon.Size = UDim2.new(1, -4, 1, -4)
-                icon.Position = UDim2.new(0, 2, 0, 2)
-                icon.ScaleType = Enum.ScaleType.Fit
-                icon.ZIndex = 3
-                icon.Parent = slot
-
-                local name = Instance.new("TextLabel")
-                name.Name = "Name"
-                name.BackgroundTransparency = 1
-                name.Position = UDim2.new(0.5, 0, 1, 2)
-                name.AnchorPoint = Vector2.new(0.5, 0)
-                name.Size = UDim2.new(1, 10, 0, 10)
-                name.Font = Enum.Font.Gotham
-                name.TextColor3 = Color3.new(1, 1, 1)
-                name.TextSize = 8
-                name.TextStrokeTransparency = 0
-                name.ZIndex = 3
-                name.Parent = slot
-            end
-            
             local nameLabel = Instance.new("TextLabel")
             nameLabel.Name = "NameLabel"
             nameLabel.BackgroundTransparency = 1
@@ -144,16 +94,6 @@ function Labels.Update(player, character, rootPart, humanoid, Settings, distance
         
         local container = bbg:FindFirstChild("Container")
         if container then
-            local enemySlotsFrame = container:FindFirstChild("EnemySlotsFrame")
-            if enemySlotsFrame then
-                local uiScale = enemySlotsFrame:FindFirstChild("UIScale")
-                if uiScale then
-                    local baseDist = 60
-                    local scale = math.clamp(baseDist / math.max(distance, 1), 0.5, 1.2)
-                    uiScale.Scale = scale
-                end
-            end
-
             local nameLabel = container:FindFirstChild("NameLabel")
             local distLabel = container:FindFirstChild("DistLabel")
             local weaponFrame = container:FindFirstChild("WeaponFrame")
@@ -194,66 +134,6 @@ function Labels.Update(player, character, rootPart, humanoid, Settings, distance
                 end
             elseif weaponFrame then
                 weaponFrame.Visible = false
-            end
-
-            if Settings.espEnemySlots and enemySlotsFrame then
-                enemySlotsFrame.Visible = true
-                local items = {}
-                
-                
-                
-                local lastItemUpdate = bbg:GetAttribute("LastItemUpdate") or 0
-                local now = tick()
-                
-                if now - lastItemUpdate > 1 then
-                    bbg:SetAttribute("LastItemUpdate", now)
-                    
-                    
-                    local equipped = character:FindFirstChildWhichIsA("Tool")
-                    if equipped then
-                        table.insert(items, equipped)
-                    end
-                    
-                    
-                    local backpack = player:FindFirstChild("Backpack")
-                    if backpack then
-                        local backpackChildren = backpack:GetChildren()
-                        for j = 1, #backpackChildren do
-                            local item = backpackChildren[j]
-                            if item:IsA("Tool") and #items < 6 then
-                                table.insert(items, item)
-                            end
-                        end
-                    end
-                    
-                    for i = 1, 6 do
-                        local slot = enemySlotsFrame:FindFirstChild("Slot" .. i)
-                        if slot then
-                            local item = items[i]
-                            local icon = slot:FindFirstChild("Icon")
-                            local name = slot:FindFirstChild("Name")
-                            
-                            if item then
-                                slot.Visible = true
-                                if icon then
-                                    if item.TextureId ~= "" then
-                                        icon.Visible = true
-                                        icon.Image = item.TextureId
-                                    else
-                                        icon.Visible = false
-                                    end
-                                end
-                                if name then
-                                    name.Text = item.Name
-                                end
-                            else
-                                slot.Visible = false
-                            end
-                        end
-                    end
-                end
-            elseif enemySlotsFrame then
-                enemySlotsFrame.Visible = false
             end
         end
     else

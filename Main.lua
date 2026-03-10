@@ -67,6 +67,14 @@ function Main.Init(Modules)
             log("View error: " .. tostring(err_gui))
         end
 
+        
+        pcall(function()
+            local GlobalEnemySlots = require("modules/ESP/GlobalEnemySlots")
+            if GlobalEnemySlots then
+                GlobalEnemySlots.Init(GUI)
+            end
+        end)
+
         log("Finalizing engine...")
     end)
 
@@ -172,10 +180,9 @@ function Main.Init(Modules)
             end
         end
 
-        
-        
+      
         local success_esp, err_esp = pcall(function()
-            ESP.Update(Settings, deltaTime, Utils)
+            ESP.Update(Settings, deltaTime, Utils, Aimbot)
         end)
         if not success_esp then 
             if tick() - lastErrorTime > 5 then

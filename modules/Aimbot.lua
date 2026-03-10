@@ -36,10 +36,6 @@ local Aimbot = {
     LastPredictedDir = nil,
     PredictionSmoothing = 0.2, 
     
-    
-    VelocityHistory = {},
-    MaxHistorySize = 5,
-
     TargetLineLastPos = nil,
 }
 
@@ -301,24 +297,7 @@ function Aimbot.Update(deltaTime, Settings, Utils, Ballistics, ESP)
             
             if Aimbot.CurrentTarget and Aimbot.CurrentTarget.player ~= target.player then
                 Aimbot.LastPredictedDir = nil
-                Aimbot.VelocityHistory = {}
             end
-            
-            
-            table.insert(Aimbot.VelocityHistory, target.velocity)
-            if #Aimbot.VelocityHistory > (Aimbot.MaxHistorySize or 5) then
-                table.remove(Aimbot.VelocityHistory, 1)
-            end
-            
-            local avgVelocity = Vector3.new(0, 0, 0)
-            for _, v in ipairs(Aimbot.VelocityHistory) do
-                avgVelocity = avgVelocity + v
-            end
-            avgVelocity = avgVelocity / #Aimbot.VelocityHistory
-            
-            
-            local originalVelocity = target.velocity
-            target.velocity = avgVelocity
             
             Aimbot.CurrentTarget = target
             
@@ -333,10 +312,10 @@ function Aimbot.Update(deltaTime, Settings, Utils, Ballistics, ESP)
                      origin = character.HumanoidRootPart.Position + Vector3.new(0, 1.5, 0)
                  end
      
-                 local predictedDir = Aimbot.GetProjectilePrediction(target, Settings, Ballistics, origin)
                 
+                local targetPos = target.aimPosition or target.targetPart.Position
+                local predictedDir = Aimbot.GetProjectilePrediction(target, Settings, Ballistics, origin)
                 
-                target.velocity = originalVelocity
                 
                 
                 local pSmoothing = Settings.predictionSmoothing or 0.2

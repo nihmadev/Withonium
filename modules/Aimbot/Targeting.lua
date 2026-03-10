@@ -164,21 +164,32 @@ function Targeting.FindTarget(Settings, Utils, Aimbot)
                 end
 
                 if isVisible then
-                    local pos, onScreen = camera:WorldToViewportPoint(bestPart.Position)
                     
                     
+                    
+                    local targetPos = bestPart.Position
+                    local originalPart = bestPart
+                    
+                    
+                    if Settings.hitboxExpanderEnabled and rootPart then
+                        local partName = bestPart.Name:lower()
+                        if partName:find("head") then
+                            
+                            targetPos = rootPart.Position + Vector3.new(0, 2.2, 0)
+                        elseif partName:find("torso") or partName:find("middle") or partName:find("center") then
+                            
+                            targetPos = rootPart.Position
+                        end
+                    end
+
+                    local pos, onScreen = camera:WorldToViewportPoint(targetPos)
                     
                     local baseFov = Settings.fovSize or 90
                     local currentFov = baseFov
                     
-                    if Aimbot and Aimbot.CurrentTarget and Aimbot.CurrentTarget.player == player then
-                        currentFov = currentFov * 1.5 
-                    end
-                    
                     if onScreen then
                         local screenDistance = (Vector2.new(pos.X, pos.Y) - screenCenter).Magnitude
-                        local worldDistance = (bestPart.Position - camera.CFrame.Position).Magnitude
-                        
+                        local worldDistance = (targetPos - camera.CFrame.Position).Magnitude
                         
                         local maxDistStuds = Settings.espMaxDistance or 700
                         if worldDistance <= maxDistStuds and screenDistance < currentFov then
@@ -193,31 +204,21 @@ function Targeting.FindTarget(Settings, Utils, Aimbot)
                                 score = worldDistance * (1 + (screenDistance / (Settings.fovSize or 90)))
                             end
 
-                            
-                            
-                            if Aimbot and Aimbot.CurrentTarget and Aimbot.CurrentTarget.player == player then
-                                score = score * 0.6 
-                            end
-
                             if score < bestScore then
                                 bestScore = score
                                 local humanoidState = humanoid:GetState()
                                 local isFalling = (humanoidState == Enum.HumanoidStateType.Freefall or humanoidState == Enum.HumanoidStateType.Jumping)
                                 
-                                
                                 if isFalling and math.abs(rootPart.Velocity.Y) < 1.5 then
                                     isFalling = false
                                 end
                                 
-                                
                                 local rawVel = rootPart.Velocity
                                 local targetVel = rawVel
-                                
                                 
                                 if humanoid.MoveDirection.Magnitude > 0.01 then
                                     local moveDir = humanoid.MoveDirection
                                     local speed = humanoid.WalkSpeed or 16
-                                    
                                     
                                     local yVel = rawVel.Y
                                     if math.abs(yVel) < 3.5 and not isFalling then
@@ -225,41 +226,22 @@ function Targeting.FindTarget(Settings, Utils, Aimbot)
                                     end
                                     targetVel = Vector3.new(moveDir.X * speed, yVel, moveDir.Z * speed)
                                 else
-                                    
                                     local vx = (math.abs(rawVel.X) < 1.0) and 0 or rawVel.X
                                     local vy = (math.abs(rawVel.Y) < 3.5 and not isFalling) and 0 or rawVel.Y
                                     local vz = (math.abs(rawVel.Z) < 1.0) and 0 or rawVel.Z
                                     targetVel = Vector3.new(vx, vy, vz)
                                 end
                                 
-                                
-                                if Aimbot and Aimbot.CurrentTarget and Aimbot.CurrentTarget.player == player then
-                                    local lastVel = Aimbot.CurrentTarget.velocity
-                                    if lastVel then
-                                        targetVel = lastVel:Lerp(targetVel, 0.4) 
-                                    end
-                                end
-
-                                
                                 local stableFalling = isFalling
-                                if Aimbot and Aimbot.CurrentTarget and Aimbot.CurrentTarget.player == player then
-                                    
-                                    
-                                    if Aimbot.CurrentTarget.isFreefalling and not isFalling then
-                                        
-                                        if rawVel.Y < -5.0 then
-                                            stableFalling = true
-                                        end
-                                    end
-                                end
 
                                 bestTarget = {
                                     player = player,
-                                    targetPart = bestPart,
+                                    targetPart = originalPart,
+                                    aimPosition = targetPos, 
                                     rootPart = rootPart,
                                     velocity = targetVel,
                                     rawVelocity = rawVel, 
-                                    lastPosition = bestPart.Position,
+                                    lastPosition = targetPos,
                                     distance = screenDistance,
                                     worldDistance = worldDistance,
                                     isFreefalling = stableFalling,

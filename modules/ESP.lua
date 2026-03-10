@@ -8,6 +8,7 @@ local Skeleton = require("modules/ESP/Skeleton")
 local Chams = require("modules/ESP/Chams")
 local Labels = require("modules/ESP/Labels")
 local Healthbars = require("modules/ESP/Healthbars")
+local GlobalEnemySlots = require("modules/ESP/GlobalEnemySlots")
 
 local ESP = {
     Data = State.Data,
@@ -35,10 +36,15 @@ function ESP.Remove(player)
     end
 end
 
-function ESP.Update(Settings, deltaTime, Utils)
+function ESP.Update(Settings, deltaTime, Utils, Aimbot)
     local now = tick()
     if now - ESP.LastUpdate < 0.033 then return end 
     ESP.LastUpdate = now
+
+    
+    if GlobalEnemySlots and Aimbot then
+        GlobalEnemySlots.Update(Settings, Utils, Aimbot)
+    end
 
     local Camera = workspace.CurrentCamera
     if not Camera then return end

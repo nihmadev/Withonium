@@ -51,10 +51,6 @@ local Aimbot = {
     LastPredictedDir = nil,
     PredictionSmoothing = 0.2, 
     
-    
-    VelocityHistory = {},
-    MaxHistorySize = 5,
-
     TargetLineLastPos = nil,
 }
 
@@ -316,24 +312,7 @@ function Aimbot.Update(deltaTime, Settings, Utils, Ballistics, ESP)
             
             if Aimbot.CurrentTarget and Aimbot.CurrentTarget.player ~= target.player then
                 Aimbot.LastPredictedDir = nil
-                Aimbot.VelocityHistory = {}
             end
-            
-            
-            table.insert(Aimbot.VelocityHistory, target.velocity)
-            if #Aimbot.VelocityHistory > (Aimbot.MaxHistorySize or 5) then
-                table.remove(Aimbot.VelocityHistory, 1)
-            end
-            
-            local avgVelocity = Vector3.new(0, 0, 0)
-            for _, v in ipairs(Aimbot.VelocityHistory) do
-                avgVelocity = avgVelocity + v
-            end
-            avgVelocity = avgVelocity / #Aimbot.VelocityHistory
-            
-            
-            local originalVelocity = target.velocity
-            target.velocity = avgVelocity
             
             Aimbot.CurrentTarget = target
             
@@ -348,10 +327,10 @@ function Aimbot.Update(deltaTime, Settings, Utils, Ballistics, ESP)
                      origin = character.HumanoidRootPart.Position + Vector3.new(0, 1.5, 0)
                  end
      
-                 local predictedDir = Aimbot.GetProjectilePrediction(target, Settings, Ballistics, origin)
                 
+                local targetPos = target.aimPosition or target.targetPart.Position
+                local predictedDir = Aimbot.GetProjectilePrediction(target, Settings, Ballistics, origin)
                 
-                target.velocity = originalVelocity
                 
                 
                 local pSmoothing = Settings.predictionSmoothing or 0.2
@@ -1180,6 +1159,7 @@ local Skeleton = require("modules/ESP/Skeleton")
 local Chams = require("modules/ESP/Chams")
 local Labels = require("modules/ESP/Labels")
 local Healthbars = require("modules/ESP/Healthbars")
+local GlobalEnemySlots = require("modules/ESP/GlobalEnemySlots")
 
 local ESP = {
     Data = State.Data,
@@ -1207,10 +1187,15 @@ function ESP.Remove(player)
     end
 end
 
-function ESP.Update(Settings, deltaTime, Utils)
+function ESP.Update(Settings, deltaTime, Utils, Aimbot)
     local now = tick()
     if now - ESP.LastUpdate < 0.033 then return end 
     ESP.LastUpdate = now
+
+    
+    if GlobalEnemySlots and Aimbot then
+        GlobalEnemySlots.Update(Settings, Utils, Aimbot)
+    end
 
     local Camera = workspace.CurrentCamera
     if not Camera then return end
@@ -4735,7 +4720,8 @@ function Prediction.GetProjectilePrediction(target, Settings, Ballistics, custom
     local camera = workspace.CurrentCamera
     local origin = customOrigin or (camera and camera.CFrame.Position) or Vector3.new(0, 0, 0)
     
-    local targetPos = target.targetPart.Position
+    
+    local targetPos = target.aimPosition or target.targetPart.Position
     local targetVelocity = target.velocity or Vector3.new(0, 0, 0)
     
     local v = Settings.projectileSpeed or 1000
@@ -5028,21 +5014,32 @@ function Targeting.FindTarget(Settings, Utils, Aimbot)
                 end
 
                 if isVisible then
-                    local pos, onScreen = camera:WorldToViewportPoint(bestPart.Position)
                     
                     
+                    
+                    local targetPos = bestPart.Position
+                    local originalPart = bestPart
+                    
+                    
+                    if Settings.hitboxExpanderEnabled and rootPart then
+                        local partName = bestPart.Name:lower()
+                        if partName:find("head") then
+                            
+                            targetPos = rootPart.Position + Vector3.new(0, 2.2, 0)
+                        elseif partName:find("torso") or partName:find("middle") or partName:find("center") then
+                            
+                            targetPos = rootPart.Position
+                        end
+                    end
+
+                    local pos, onScreen = camera:WorldToViewportPoint(targetPos)
                     
                     local baseFov = Settings.fovSize or 90
                     local currentFov = baseFov
                     
-                    if Aimbot and Aimbot.CurrentTarget and Aimbot.CurrentTarget.player == player then
-                        currentFov = currentFov * 1.5 
-                    end
-                    
                     if onScreen then
                         local screenDistance = (Vector2.new(pos.X, pos.Y) - screenCenter).Magnitude
-                        local worldDistance = (bestPart.Position - camera.CFrame.Position).Magnitude
-                        
+                        local worldDistance = (targetPos - camera.CFrame.Position).Magnitude
                         
                         local maxDistStuds = Settings.espMaxDistance or 700
                         if worldDistance <= maxDistStuds and screenDistance < currentFov then
@@ -5057,31 +5054,21 @@ function Targeting.FindTarget(Settings, Utils, Aimbot)
                                 score = worldDistance * (1 + (screenDistance / (Settings.fovSize or 90)))
                             end
 
-                            
-                            
-                            if Aimbot and Aimbot.CurrentTarget and Aimbot.CurrentTarget.player == player then
-                                score = score * 0.6 
-                            end
-
                             if score < bestScore then
                                 bestScore = score
                                 local humanoidState = humanoid:GetState()
                                 local isFalling = (humanoidState == Enum.HumanoidStateType.Freefall or humanoidState == Enum.HumanoidStateType.Jumping)
                                 
-                                
                                 if isFalling and math.abs(rootPart.Velocity.Y) < 1.5 then
                                     isFalling = false
                                 end
                                 
-                                
                                 local rawVel = rootPart.Velocity
                                 local targetVel = rawVel
-                                
                                 
                                 if humanoid.MoveDirection.Magnitude > 0.01 then
                                     local moveDir = humanoid.MoveDirection
                                     local speed = humanoid.WalkSpeed or 16
-                                    
                                     
                                     local yVel = rawVel.Y
                                     if math.abs(yVel) < 3.5 and not isFalling then
@@ -5089,41 +5076,22 @@ function Targeting.FindTarget(Settings, Utils, Aimbot)
                                     end
                                     targetVel = Vector3.new(moveDir.X * speed, yVel, moveDir.Z * speed)
                                 else
-                                    
                                     local vx = (math.abs(rawVel.X) < 1.0) and 0 or rawVel.X
                                     local vy = (math.abs(rawVel.Y) < 3.5 and not isFalling) and 0 or rawVel.Y
                                     local vz = (math.abs(rawVel.Z) < 1.0) and 0 or rawVel.Z
                                     targetVel = Vector3.new(vx, vy, vz)
                                 end
                                 
-                                
-                                if Aimbot and Aimbot.CurrentTarget and Aimbot.CurrentTarget.player == player then
-                                    local lastVel = Aimbot.CurrentTarget.velocity
-                                    if lastVel then
-                                        targetVel = lastVel:Lerp(targetVel, 0.4) 
-                                    end
-                                end
-
-                                
                                 local stableFalling = isFalling
-                                if Aimbot and Aimbot.CurrentTarget and Aimbot.CurrentTarget.player == player then
-                                    
-                                    
-                                    if Aimbot.CurrentTarget.isFreefalling and not isFalling then
-                                        
-                                        if rawVel.Y < -5.0 then
-                                            stableFalling = true
-                                        end
-                                    end
-                                end
 
                                 bestTarget = {
                                     player = player,
-                                    targetPart = bestPart,
+                                    targetPart = originalPart,
+                                    aimPosition = targetPos, 
                                     rootPart = rootPart,
                                     velocity = targetVel,
                                     rawVelocity = rawVel, 
-                                    lastPosition = bestPart.Position,
+                                    lastPosition = targetPos,
                                     distance = screenDistance,
                                     worldDistance = worldDistance,
                                     isFreefalling = stableFalling,
@@ -5213,6 +5181,160 @@ function Chams.Destroy(player)
 end
 
 return Chams
+
+end
+
+_modules["modules/ESP/GlobalEnemySlots"] = function()
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local GlobalEnemySlots = {
+    Frame = nil,
+    Slots = {},
+    LastUpdate = 0,
+    Initialized = false
+}
+
+function GlobalEnemySlots.Init(GUI)
+    if GlobalEnemySlots.Initialized then return end
+    if not GUI or not GUI.ScreenGui then return end
+    
+    local frame = Instance.new("Frame")
+    frame.Name = "GlobalEnemySlots"
+    frame.BackgroundTransparency = 1
+    
+    
+    
+    frame.Position = UDim2.new(0.5, 0, 1, -125) 
+    frame.AnchorPoint = Vector2.new(0.5, 1)
+    frame.Size = UDim2.new(0, 350, 0, 120)
+    frame.Visible = false
+    frame.Parent = GUI.ScreenGui
+    
+    local layout = Instance.new("UIGridLayout")
+    layout.Parent = frame
+    layout.CellPadding = UDim2.new(0, 6, 0, 6)
+    layout.CellSize = UDim2.new(0, 52, 0, 52) 
+    layout.FillDirection = Enum.FillDirection.Horizontal
+    layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
+    
+    for i = 1, 12 do
+        local slot = Instance.new("Frame")
+        slot.Name = "Slot" .. i
+        slot.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+        slot.BackgroundTransparency = 0.4
+        slot.BorderSizePixel = 1
+        slot.Parent = frame
+        
+        local stroke = Instance.new("UIStroke")
+        stroke.Color = Color3.fromRGB(80, 80, 80)
+        stroke.Thickness = 1
+        stroke.Parent = slot
+        
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(0, 6)
+        corner.Parent = slot
+
+        local icon = Instance.new("ImageLabel")
+        icon.Name = "Icon"
+        icon.BackgroundTransparency = 1
+        icon.Size = UDim2.new(1, -10, 1, -10)
+        icon.Position = UDim2.new(0, 5, 0, 5)
+        icon.ScaleType = Enum.ScaleType.Fit
+        icon.ZIndex = 2
+        icon.Parent = slot
+        
+        local name = Instance.new("TextLabel")
+        name.Name = "Name"
+        name.BackgroundTransparency = 1
+        name.Position = UDim2.new(0.5, 0, 1, -3)
+        name.AnchorPoint = Vector2.new(0.5, 1)
+        name.Size = UDim2.new(1, -6, 0, 12)
+        name.Font = Enum.Font.GothamMedium
+        name.TextColor3 = Color3.new(1, 1, 1)
+        name.TextSize = 8
+        name.TextStrokeTransparency = 0.5
+        name.ZIndex = 3
+        name.Parent = slot
+        
+        GlobalEnemySlots.Slots[i] = {
+            Frame = slot,
+            Icon = icon,
+            Name = name
+        }
+    end
+    
+    GlobalEnemySlots.Frame = frame
+    GlobalEnemySlots.Initialized = true
+end
+
+function GlobalEnemySlots.Update(Settings, Utils, Aimbot)
+    if not Settings.espEnabled or not Settings.espEnemySlots or not GlobalEnemySlots.Frame then
+        if GlobalEnemySlots.Frame then GlobalEnemySlots.Frame.Visible = false end
+        return
+    end
+    
+    
+    local target = Aimbot.FindTarget(Settings, Utils)
+    if not target or not target.player then
+        GlobalEnemySlots.Frame.Visible = false
+        return
+    end
+    
+    local player = target.player
+    local character = Utils.getCharacter(player)
+    if not character then
+        GlobalEnemySlots.Frame.Visible = false
+        return
+    end
+    
+    GlobalEnemySlots.Frame.Visible = true
+    
+    local now = tick()
+    if now - GlobalEnemySlots.LastUpdate < 0.2 then return end 
+    GlobalEnemySlots.LastUpdate = now
+    
+    local items = {}
+    
+    
+    local equipped = character:FindFirstChildWhichIsA("Tool")
+    if equipped then
+        table.insert(items, equipped)
+    end
+    
+    
+    local backpack = player:FindFirstChild("Backpack")
+    if backpack then
+        local children = backpack:GetChildren()
+        for i = 1, #children do
+            local item = children[i]
+            if item:IsA("Tool") and item ~= equipped and #items < 12 then
+                table.insert(items, item)
+            end
+        end
+    end
+    
+    for i = 1, 12 do
+        local slot = GlobalEnemySlots.Slots[i]
+        local item = items[i]
+        
+        if item then
+            slot.Frame.Visible = true
+            if item.TextureId ~= "" then
+                slot.Icon.Visible = true
+                slot.Icon.Image = item.TextureId
+            else
+                slot.Icon.Visible = false
+            end
+            slot.Name.Text = item.Name
+        else
+            slot.Frame.Visible = false
+        end
+    end
+end
+
+return GlobalEnemySlots
 
 end
 
@@ -5386,56 +5508,6 @@ function Labels.Update(player, character, rootPart, humanoid, Settings, distance
             layout.SortOrder = Enum.SortOrder.LayoutOrder
             layout.Padding = UDim.new(0, 2)
             
-            local enemySlotsFrame = Instance.new("Frame")
-            enemySlotsFrame.Name = "EnemySlotsFrame"
-            enemySlotsFrame.BackgroundTransparency = 1
-            enemySlotsFrame.Size = UDim2.new(1, 0, 0, 45)
-            enemySlotsFrame.LayoutOrder = 0
-            enemySlotsFrame.Parent = container
-
-            local uiScale = Instance.new("UIScale")
-            uiScale.Name = "UIScale"
-            uiScale.Parent = enemySlotsFrame
-
-            local slotsLayout = Instance.new("UIListLayout")
-            slotsLayout.Parent = enemySlotsFrame
-            slotsLayout.FillDirection = Enum.FillDirection.Horizontal
-            slotsLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-            slotsLayout.VerticalAlignment = Enum.VerticalAlignment.Top
-            slotsLayout.Padding = UDim.new(0, 4)
-
-            for i = 1, 6 do
-                local slot = Instance.new("Frame")
-                slot.Name = "Slot" .. i
-                slot.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-                slot.BackgroundTransparency = 0.5
-                slot.BorderSizePixel = 1
-                slot.Size = UDim2.new(0, 32, 0, 32)
-                slot.Parent = enemySlotsFrame
-
-                local icon = Instance.new("ImageLabel")
-                icon.Name = "Icon"
-                icon.BackgroundTransparency = 1
-                icon.Size = UDim2.new(1, -4, 1, -4)
-                icon.Position = UDim2.new(0, 2, 0, 2)
-                icon.ScaleType = Enum.ScaleType.Fit
-                icon.ZIndex = 3
-                icon.Parent = slot
-
-                local name = Instance.new("TextLabel")
-                name.Name = "Name"
-                name.BackgroundTransparency = 1
-                name.Position = UDim2.new(0.5, 0, 1, 2)
-                name.AnchorPoint = Vector2.new(0.5, 0)
-                name.Size = UDim2.new(1, 10, 0, 10)
-                name.Font = Enum.Font.Gotham
-                name.TextColor3 = Color3.new(1, 1, 1)
-                name.TextSize = 8
-                name.TextStrokeTransparency = 0
-                name.ZIndex = 3
-                name.Parent = slot
-            end
-            
             local nameLabel = Instance.new("TextLabel")
             nameLabel.Name = "NameLabel"
             nameLabel.BackgroundTransparency = 1
@@ -5503,16 +5575,6 @@ function Labels.Update(player, character, rootPart, humanoid, Settings, distance
         
         local container = bbg:FindFirstChild("Container")
         if container then
-            local enemySlotsFrame = container:FindFirstChild("EnemySlotsFrame")
-            if enemySlotsFrame then
-                local uiScale = enemySlotsFrame:FindFirstChild("UIScale")
-                if uiScale then
-                    local baseDist = 60
-                    local scale = math.clamp(baseDist / math.max(distance, 1), 0.5, 1.2)
-                    uiScale.Scale = scale
-                end
-            end
-
             local nameLabel = container:FindFirstChild("NameLabel")
             local distLabel = container:FindFirstChild("DistLabel")
             local weaponFrame = container:FindFirstChild("WeaponFrame")
@@ -5553,66 +5615,6 @@ function Labels.Update(player, character, rootPart, humanoid, Settings, distance
                 end
             elseif weaponFrame then
                 weaponFrame.Visible = false
-            end
-
-            if Settings.espEnemySlots and enemySlotsFrame then
-                enemySlotsFrame.Visible = true
-                local items = {}
-                
-                
-                
-                local lastItemUpdate = bbg:GetAttribute("LastItemUpdate") or 0
-                local now = tick()
-                
-                if now - lastItemUpdate > 1 then
-                    bbg:SetAttribute("LastItemUpdate", now)
-                    
-                    
-                    local equipped = character:FindFirstChildWhichIsA("Tool")
-                    if equipped then
-                        table.insert(items, equipped)
-                    end
-                    
-                    
-                    local backpack = player:FindFirstChild("Backpack")
-                    if backpack then
-                        local backpackChildren = backpack:GetChildren()
-                        for j = 1, #backpackChildren do
-                            local item = backpackChildren[j]
-                            if item:IsA("Tool") and #items < 6 then
-                                table.insert(items, item)
-                            end
-                        end
-                    end
-                    
-                    for i = 1, 6 do
-                        local slot = enemySlotsFrame:FindFirstChild("Slot" .. i)
-                        if slot then
-                            local item = items[i]
-                            local icon = slot:FindFirstChild("Icon")
-                            local name = slot:FindFirstChild("Name")
-                            
-                            if item then
-                                slot.Visible = true
-                                if icon then
-                                    if item.TextureId ~= "" then
-                                        icon.Visible = true
-                                        icon.Image = item.TextureId
-                                    else
-                                        icon.Visible = false
-                                    end
-                                end
-                                if name then
-                                    name.Text = item.Name
-                                end
-                            else
-                                slot.Visible = false
-                            end
-                        end
-                    end
-                end
-            elseif enemySlotsFrame then
-                enemySlotsFrame.Visible = false
             end
         end
     else
@@ -5807,7 +5809,8 @@ local Modules = {
 ["Ballistics"] = _require("modules/Ballistics"),
 ["BulletTracer"] = _require("modules/BulletTracer"),
 ["ConfigManager"] = _require("modules/ConfigManager"),
-["ItemSpawner"] = _require("modules/ItemSpawner")
+["ItemSpawner"] = _require("modules/ItemSpawner"),
+["GlobalEnemySlots"] = _require("modules/ESP/GlobalEnemySlots")
 }
 
 local Main = (function()
@@ -5879,6 +5882,14 @@ function Main.Init(Modules)
         if not success_gui then
             log("View error: " .. tostring(err_gui))
         end
+
+        
+        pcall(function()
+            local GlobalEnemySlots = require("modules/ESP/GlobalEnemySlots")
+            if GlobalEnemySlots then
+                GlobalEnemySlots.Init(GUI)
+            end
+        end)
 
         log("Finalizing engine...")
     end)
@@ -5985,10 +5996,9 @@ function Main.Init(Modules)
             end
         end
 
-        
-        
+      
         local success_esp, err_esp = pcall(function()
-            ESP.Update(Settings, deltaTime, Utils)
+            ESP.Update(Settings, deltaTime, Utils, Aimbot)
         end)
         if not success_esp then 
             if tick() - lastErrorTime > 5 then

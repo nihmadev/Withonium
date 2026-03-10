@@ -4,7 +4,8 @@ function Prediction.GetProjectilePrediction(target, Settings, Ballistics, custom
     local camera = workspace.CurrentCamera
     local origin = customOrigin or (camera and camera.CFrame.Position) or Vector3.new(0, 0, 0)
     
-    local targetPos = target.targetPart.Position
+    
+    local targetPos = target.aimPosition or target.targetPart.Position
     local targetVelocity = target.velocity or Vector3.new(0, 0, 0)
     
     local v = Settings.projectileSpeed or 1000
