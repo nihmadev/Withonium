@@ -52,26 +52,49 @@ function Hitboxes.UpdateHitboxes(Aimbot, Settings, Utils, ESP)
     local maxDist = Settings.espMaxDistance or 500
     local camPos = workspace.CurrentCamera.CFrame.Position
     
+    
     local allPlayers = Players:GetPlayers()
     for i = 1, #allPlayers do
         local player = allPlayers[i]
         if player == LocalPlayer then continue end
         
-        local character = player.Character
+        
+        local character = Utils.getCharacter(player)
         if not character then continue end
         
-        local rootPart = character:FindFirstChild("HumanoidRootPart") or character:FindFirstChild("Torso") or character:FindFirstChild("UpperTorso")
+        
+        local rootPart = character:FindFirstChild("HumanoidRootPart") 
+            or character:FindFirstChild("Torso") 
+            or character:FindFirstChild("UpperTorso") 
+            or character:FindFirstChild("Middle") 
+            or character:FindFirstChild("Center")
+        
         if not rootPart then continue end
         
-        if (rootPart.Position - camPos).Magnitude > maxDist then
+        
+        local distance = (rootPart.Position - camPos).Magnitude
+        if distance > 2000 then 
             continue 
         end
 
-        local parts = Utils.getAllBodyParts(character, Settings.targetPart or "Head")
         
-        for j = 1, #parts do
-            local part = parts[j]
-            if not part or part.Name == "HumanoidRootPart" then continue end
+        local targetParts = {}
+        local partSelection = Settings.targetPart or "Head"
+        
+        if partSelection == "All" then
+            targetParts = Utils.getAllBodyParts(character, "Head")
+            local torsoParts = Utils.getAllBodyParts(character, "Torso")
+            for _, p in ipairs(torsoParts) do table.insert(targetParts, p) end
+        else
+            targetParts = Utils.getAllBodyParts(character, partSelection)
+        end
+        
+        
+        
+        for j = 1, #targetParts do
+            local part = targetParts[j]
+            if not part or not part:IsA("BasePart") or part.Name == "HumanoidRootPart" then continue end
+            
             
             if not Hitboxes.OriginalProperties[part] then
                 Hitboxes.OriginalProperties[part] = {
@@ -84,32 +107,22 @@ function Hitboxes.UpdateHitboxes(Aimbot, Settings, Utils, ESP)
                 }
             end
             
-            -- РЕГИСТРАЦИЯ УРОНА (МАКСИМУМ)
-            -- 1. Используем Ball/Sphere для хитбокса, если это обычный Part. 
-            -- Сферические хитбоксы регают урон намного лучше под любым углом.
-            if part:IsA("Part") and part.Shape ~= Enum.PartType.Ball then
-                part.Shape = Enum.PartType.Ball
-            end
-
-            -- 2. Принудительные свойства для коллизий лучей (Raycast/Projectiles)
+            
             if part.Size ~= targetSize then
                 part.Size = targetSize
                 part.CanCollide = false 
-                part.CanTouch = true  -- Важно для Touch-based урона
+                part.CanTouch = true 
                 part.Massless = true
-                
-                -- Отключаем CanQuery для физики, но оставляем для Raycast (в некоторых играх это помогает)
-                -- Но чаще всего стандартного CanTouch достаточно.
+                if part:IsA("Part") then part.Shape = Enum.PartType.Ball end
             end
 
-            -- ВИЗУАЛИЗАЦИЯ (СТАБИЛЬНЫЙ СКИН)
+            
             if Settings.hitboxExpanderShow then
-                -- Устанавливаем 80% прозрачность для основной части (скин персонажа)
                 if part.Transparency ~= 0.8 then
                     part.Transparency = 0.8
                 end
                 
-                -- Удаляем любую старую обводку, если она осталась
+                
                 local visual = part:FindFirstChild("HitboxVisual")
                 if visual then visual:Destroy() end
             else
@@ -121,7 +134,7 @@ function Hitboxes.UpdateHitboxes(Aimbot, Settings, Utils, ESP)
         end
     end
     
-    -- Инкрементальная очистка
+    
     local partsInCache = {}
     local k = 0
     for part, _ in pairs(Hitboxes.OriginalProperties) do

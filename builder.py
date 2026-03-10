@@ -3,6 +3,7 @@ import re
 import random
 import string
 import hashlib
+import time
 
 
 ENTRY_POINT = 'Main.lua'
@@ -161,7 +162,7 @@ def build():
     push = input()
     if push == "y" or push == "":
         os.system("git add .")
-        os.system('git commit -m "Fixed mg bullets"')
+        os.system(f"git commit -m \"Build ({time.strftime('%Y-%m-%d %H:%M:%S')})\"")
         os.system("git push origin main")
 if __name__ == "__main__":
     build()

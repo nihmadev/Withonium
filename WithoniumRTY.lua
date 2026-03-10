@@ -1803,7 +1803,7 @@ local function setVisibility(visibility: boolean, notify: boolean?)
 		
 		if not getAsset then return nil end
 
-		-- Helper to download content
+		
 		local function download(targetUrl)
 			local requestFunc = (syn and syn.request) or (fluxus and fluxus.request) or (http and http.request) or http_request or request
 			if requestFunc then
@@ -1818,9 +1818,9 @@ local function setVisibility(visibility: boolean, notify: boolean?)
 			return if success then body else nil
 		end
 
-		-- Logic to handle updates: 
-		-- We use getgenv() to check if we've already checked for updates in THIS session.
-		-- This prevents lag on every re-execution but allows update after game restart.
+		
+		
+		
 		if not _G.WithoniumLogoChecked then
 			local body = download(url)
 			if body and #body > 0 then

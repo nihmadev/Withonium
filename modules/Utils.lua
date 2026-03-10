@@ -19,11 +19,10 @@ function Utils.getCharacter(player)
     if player.Character then return player.Character end
     
     
-    
-    if game.PlaceId == 13253735473 or game.PlaceId == 8130299583 then
+    local placeId = game.PlaceId
+    if placeId == 13253735473 or placeId == 8130299583 then
         local renv = getrenv and getrenv()
         if renv and renv._G then
-            
             if renv._G.Character and renv._G.Character.character then
                 if player == Players.LocalPlayer then
                     return renv._G.Character.character
@@ -31,11 +30,26 @@ function Utils.getCharacter(player)
             end
         end
         
-        
         local ignorePlayers = workspace:FindFirstChild("Ignore") and workspace.Ignore:FindFirstChild("Players")
         if ignorePlayers then
             local char = ignorePlayers:FindFirstChild(player.Name)
             if char and char:IsA("Model") then return char end
+        end
+    end
+
+    
+    
+    local char = workspace:FindFirstChild(player.Name)
+    if char and char:IsA("Model") and char:FindFirstChildOfClass("Humanoid") then
+        return char
+    end
+    
+    
+    for _, folderName in ipairs({"Players", "Characters", "Entities", "Living"}) do
+        local folder = workspace:FindFirstChild(folderName)
+        if folder then
+            local c = folder:FindFirstChild(player.Name)
+            if c and c:IsA("Model") then return c end
         end
     end
     
@@ -63,28 +77,47 @@ function Utils.getBodyPart(character, partName)
 end
 
 function Utils.getAllBodyParts(character, partName)
-    
     local parts = Utils.BodyPartsCache
     for k in pairs(parts) do parts[k] = nil end
     
     if not character then return parts end
     
+    local function findSimilar(name)
+        for _, child in ipairs(character:GetChildren()) do
+            if child:IsA("BasePart") and child.Name:lower():find(name:lower()) then
+                table.insert(parts, child)
+            end
+        end
+    end
+
     if partName == "Head" then
-        local p = character:FindFirstChild("Head")
-        if p then table.insert(parts, p) end
+        local p = character:FindFirstChild("Head") or character:FindFirstChild("head")
+        if p then table.insert(parts, p) else findSimilar("head") end
     elseif partName == "Torso" then
-        local p1 = character:FindFirstChild("UpperTorso")
-        local p2 = character:FindFirstChild("LowerTorso")
-        local p3 = character:FindFirstChild("Torso")
-        if p1 then table.insert(parts, p1) end
-        if p2 then table.insert(parts, p2) end
-        if p3 then table.insert(parts, p3) end
-    elseif partName == "Legs" then
-        for _, n in ipairs({"Left Leg", "Right Leg", "LeftUpperLeg", "LeftLowerLeg", "RightUpperLeg", "RightLowerLeg"}) do
+        local names = {"UpperTorso", "LowerTorso", "Torso", "Middle", "Center", "Chest"}
+        for _, n in ipairs(names) do
             local p = character:FindFirstChild(n)
             if p then table.insert(parts, p) end
         end
+        if #parts == 0 then findSimilar("torso") end
+    elseif partName == "Legs" then
+        local names = {"Left Leg", "Right Leg", "LeftUpperLeg", "LeftLowerLeg", "RightUpperLeg", "RightLowerLeg"}
+        for _, n in ipairs(names) do
+            local p = character:FindFirstChild(n)
+            if p then table.insert(parts, p) end
+        end
+        if #parts == 0 then findSimilar("leg") end
     end
+    
+    
+    if #parts == 0 then
+        for _, child in ipairs(character:GetChildren()) do
+            if child:IsA("BasePart") and child.Transparency < 1 and child.Name ~= "HumanoidRootPart" then
+                table.insert(parts, child)
+            end
+        end
+    end
+    
     return parts
 end
 
