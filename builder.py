@@ -140,6 +140,7 @@ def build():
         '    ["BulletTracer"] = _require("modules/BulletTracer"),',
         '    ["ConfigManager"] = _require("modules/ConfigManager"),',
         '    ["ItemSpawner"] = _require("modules/ItemSpawner"),',
+        '    ["ActorBypass"] = _require("modules/ActorBypass"),',
         '    ["GlobalEnemySlots"] = _require("modules/ESP/GlobalEnemySlots")',
         "}",
         "",

@@ -31,9 +31,15 @@ function Main.Init(Modules)
     local BulletTracer = Modules.BulletTracer
     local Crosshair = Modules.Crosshair
     local ItemSpawner = Modules.ItemSpawner
+    local ActorBypass = Modules.ActorBypass
 
     
     task.spawn(function()
+        
+        if ActorBypass then
+            pcall(function() ActorBypass.Init(Settings) end)
+        end
+
         
         if ConfigManager then
             pcall(function()
