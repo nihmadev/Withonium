@@ -24,76 +24,68 @@ local function log(msg)
 end
 
 function ActorBypass.Init(Settings)
-    log("Initializing Actor Bypass for Trident Survival...")
+    log("Initializing Legacy Actor Bypass (Extraction Method)...")
     
-    local hasGetActors = getactors ~= nil
-    local hasRunOnActor = run_on_actor ~= nil
+    local Players = game:GetService("Players")
+    local LocalPlayer = Players.LocalPlayer
+    local PlayerGui = LocalPlayer:WaitForChild("PlayerGui", 5)
     
-    if not (hasGetActors and hasRunOnActor) then
-        log("Executor does not support getactors/run_on_actor. Using basic synchronization.")
+    if not PlayerGui then
+        log("PlayerGui not found, bypass might fail.")
         return
     end
 
-    
-    
-    
-    local function injectToActor(actor)
+    local function bypassActor(actor)
         if not actor or not actor:IsA("Actor") then return end
         
+        log("Bypassing Actor: " .. actor.Name)
         
-        if actor:FindFirstChild("Withonium_Injected") then return end
-        local marker = Instance.new("BoolValue")
-        marker.Name = "Withonium_Injected"
-        marker.Parent = actor
-
-        log("Injecting to actor: " .. actor.Name)
         
-        local payload = [[
-            local actor = ...
-            local function log(msg)
-                pcall(function() warn("[Actor:" .. actor.Name .. "] " .. tostring(msg)) end)
-            end
-            
-            log("Payload active.")
-            
-            
-            
-            
-            
-            
-            
-            
-            task.spawn(function()
-                while task.wait(5) do
+        for _, child in ipairs(actor:GetChildren()) do
+            pcall(function()
+                if child:IsA("LocalScript") or child:IsA("ModuleScript") then
                     
+                    local wasDisabled = child.Disabled
+                    child.Disabled = true
+                    child.Parent = PlayerGui
+                    task.wait()
+                    child.Disabled = wasDisabled
+                else
+                    child.Parent = PlayerGui
                 end
             end)
-        ]]
+        end
         
-        task.spawn(function()
-            local success, err = pcall(function()
-                run_on_actor(actor, payload)
-            end)
-            if not success then
-                log("Injection failed for " .. actor.Name .. ": " .. tostring(err))
-            end
-        end)
+        
+        task.wait()
+        actor:Destroy()
+        log("Actor " .. actor.Name .. " has been successfully bypassed.")
     end
 
     
-    for _, actor in ipairs(getactors()) do
-        injectToActor(actor)
+    for _, child in ipairs(PlayerGui:GetChildren()) do
+        if child:IsA("Actor") then
+            bypassActor(child)
+        end
     end
 
     
-    game.DescendantAdded:Connect(function(descendant)
-        if descendant:IsA("Actor") then
-            task.wait(0.5) 
-            injectToActor(descendant)
+    PlayerGui.ChildAdded:Connect(function(child)
+        if child:IsA("Actor") then
+            task.wait() 
+            bypassActor(child)
         end
     end)
 
-    log("Actor Bypass successfully initialized.")
+    
+    LocalPlayer.ChildAdded:Connect(function(child)
+        if child:IsA("Actor") then
+            task.wait()
+            bypassActor(child)
+        end
+    end)
+
+    log("Legacy Actor Bypass active.")
 end
 
 return ActorBypass
