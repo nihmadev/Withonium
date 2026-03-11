@@ -81,7 +81,11 @@ function ESP.Update(Settings, deltaTime, Utils, Aimbot)
         if player == LocalPlayer then continue end
         
         local character = Utils.getCharacter(player)
-        local rootPart = character and (character:FindFirstChild("HumanoidRootPart") or character:FindFirstChild("Torso") or character:FindFirstChild("UpperTorso") or character:FindFirstChild("Middle") or character:FindFirstChild("Head"))
+        local rootPart = character and (character:FindFirstChild("HumanoidRootPart") or character:FindFirstChild("Torso") or character:FindFirstChild("UpperTorso") or character:FindFirstChild("Middle") or character:FindFirstChild("Head") or character:FindFirstChildOfClass("BasePart"))
+        
+        if not rootPart and character then
+            rootPart = Utils.getBodyPart(character, "Torso") or Utils.getBodyPart(character, "Head")
+        end
         
         local dist = 999999
         if rootPart then
@@ -205,7 +209,22 @@ function ESP.Update(Settings, deltaTime, Utils, Aimbot)
                     minScreenDist = screenDist
                     bestTargetPlayer = player
                     bestTargetChar = character
-                    bestTargetItems = Utils.getInventoryItems(player, character)
+                    
+                    
+                    local items = {}
+                    local equipped = character:FindFirstChildWhichIsA("Tool")
+                    if equipped then table.insert(items, equipped) end
+                    local backpack = player:FindFirstChild("Backpack")
+                    if backpack then
+                        local children = backpack:GetChildren()
+                        for j = 1, #children do
+                            local item = children[j]
+                            if item:IsA("Tool") and item ~= equipped and #items < 12 then
+                                table.insert(items, item)
+                            end
+                        end
+                    end
+                    bestTargetItems = items
                 end
             end
         end

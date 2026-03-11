@@ -3,7 +3,9 @@ local State = require("modules/ESP/State")
 local Healthbars = {}
 
 function Healthbars.Update(player, character, rootPart, humanoid, Settings, isWithinDistance)
-    if Settings.espEnabled and isWithinDistance and Settings.espHealthBar and character and rootPart and humanoid and humanoid.Health > 0 and character.Parent then
+    local health = (humanoid and humanoid.Health) or 100
+    local maxHealth = (humanoid and humanoid.MaxHealth) or 100
+    if Settings.espEnabled and isWithinDistance and Settings.espHealthBar and character and rootPart and health > 0 and character.Parent then
         if not State.Healthbars[player] or not State.Healthbars[player].Parent then
             local bbg = Instance.new("BillboardGui")
             bbg.Name = "ESP_Healthbar"
@@ -48,7 +50,7 @@ function Healthbars.Update(player, character, rootPart, humanoid, Settings, isWi
         local text = bg and bg:FindFirstChild("HealthText")
         
         if bg and fill and text then
-            local healthPercent = math.clamp(humanoid.Health / humanoid.MaxHealth, 0, 1)
+            local healthPercent = math.clamp(health / maxHealth, 0, 1)
             local position = Settings.espHealthBarPosition or "Left"
             
             local autoScale = (Settings.espHealthBarAutoScale == nil) and true or Settings.espHealthBarAutoScale
@@ -75,7 +77,7 @@ function Healthbars.Update(player, character, rootPart, humanoid, Settings, isWi
             
             if Settings.espHealthBarText then
                 text.Visible = true
-                text.Text = math.floor(humanoid.Health)
+                text.Text = math.floor(health)
             else
                 text.Visible = false
             end

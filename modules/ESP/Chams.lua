@@ -3,7 +3,8 @@ local State = require("modules/ESP/State")
 local Chams = {}
 
 function Chams.Update(player, character, humanoid, Settings, activeHighlights, maxHighlights)
-    if Settings.espEnabled and Settings.espHighlights and character.Parent and humanoid and humanoid.Health > 0 and activeHighlights < maxHighlights then
+    local health = (humanoid and humanoid.Health) or 100
+    if Settings.espEnabled and Settings.espHighlights and character.Parent and health > 0 and activeHighlights < maxHighlights then
         if not State.Highlights[player] or not State.Highlights[player].Parent then
             local highlight = Instance.new("Highlight")
             highlight.Name = player.Name

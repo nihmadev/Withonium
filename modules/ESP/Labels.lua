@@ -1,10 +1,10 @@
 local State = require("modules/ESP/State")
-local Utils = require("modules/Utils")
 
 local Labels = {}
 
 function Labels.Update(player, character, rootPart, humanoid, Settings, distance, isWithinDistance)
-    if Settings.espEnabled and isWithinDistance and (Settings.espNames or Settings.espDistances or Settings.espWeapons) and character and rootPart and humanoid and humanoid.Health > 0 and character.Parent then
+    local health = (humanoid and humanoid.Health) or 100
+    if Settings.espEnabled and isWithinDistance and (Settings.espNames or Settings.espDistances or Settings.espWeapons) and character and rootPart and health > 0 and character.Parent then
         if not State.Labels[player] or not State.Labels[player].Parent then
             local bbg = Instance.new("BillboardGui")
             bbg.Name = "ESP_Label"
@@ -118,37 +118,17 @@ function Labels.Update(player, character, rootPart, humanoid, Settings, distance
             if Settings.espWeapons and weaponFrame then
                 local weaponLabel = weaponFrame:FindFirstChild("WeaponLabel")
                 local weaponIcon = weaponFrame:FindFirstChild("WeaponIcon")
-                local tool = Utils.getEquippedItem(player, character)
+                local tool = character:FindFirstChildWhichIsA("Tool")
                 
                 weaponFrame.Visible = true
                 if weaponLabel then
-                    local name = "None"
-                    if tool then
-                        name = tool.Name
-                        if name == "Worldmodel" or name == "Viewmodel" or name == "Rig" then
-                            local real = tool:FindFirstChildOfClass("Model") or tool:FindFirstChildOfClass("Tool")
-                            if real then name = real.Name else name = "None" end
-                        end
-                    end
-                    weaponLabel.Text = name
+                    weaponLabel.Text = tool and tool.Name or "None"
                 end
                 
                 if weaponIcon then
-                    local texture = ""
-                    if tool then
-                        if tool:IsA("Tool") then
-                            texture = tool.TextureId
-                        elseif tool:FindFirstChild("TextureId") then
-                            local tid = tool:FindFirstChild("TextureId")
-                            texture = tid:IsA("StringValue") and tid.Value or ""
-                        elseif tool:GetAttribute("TextureId") or tool:GetAttribute("Icon") then
-                            texture = tool:GetAttribute("TextureId") or tool:GetAttribute("Icon")
-                        end
-                    end
-
-                    if Settings.espIcons and texture ~= "" then
+                    if Settings.espIcons and tool and tool.TextureId ~= "" then
                         weaponIcon.Visible = true
-                        weaponIcon.Image = texture
+                        weaponIcon.Image = tool.TextureId
                     else
                         weaponIcon.Visible = false
                     end

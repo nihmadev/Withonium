@@ -76,11 +76,21 @@ function Targeting.FindTarget(Settings, Utils, Aimbot)
         end
         
         if player ~= LocalPlayer and character and not isTeammate then
-            local humanoid = character:FindFirstChild("Humanoid")
+            local humanoid = character:FindFirstChildOfClass("Humanoid") or character:FindFirstChild("Humanoid")
             local targetObj = Utils.getBodyPart(character, Settings.targetPart)
-            local rootPart = character:FindFirstChild("HumanoidRootPart")
+            local rootPart = character:FindFirstChild("HumanoidRootPart") or character:FindFirstChild("Torso") or character:FindFirstChild("UpperTorso") or character:FindFirstChildOfClass("BasePart")
             
-            if humanoid and humanoid.Health > 0 and rootPart then
+            if not rootPart and character then
+                rootPart = Utils.getBodyPart(character, "Torso") or Utils.getBodyPart(character, "Head")
+            end
+            
+            if character and rootPart then
+                local health = 100
+                if humanoid then
+                    health = humanoid.Health
+                end
+                
+                if health > 0 then
                 
                 if not targetObj then targetObj = character:FindFirstChild("Head") end
                 
@@ -231,7 +241,7 @@ function Targeting.FindTarget(Settings, Utils, Aimbot)
 
                             if score < bestScore then
                                 bestScore = score
-                                local humanoidState = humanoid:GetState()
+                                local humanoidState = humanoid and humanoid:GetState() or Enum.HumanoidStateType.Running
                                 local isFalling = (humanoidState == Enum.HumanoidStateType.Freefall or humanoidState == Enum.HumanoidStateType.Jumping)
                                 
                                 if isFalling and math.abs(rootPart.Velocity.Y) < 1.5 then
@@ -241,7 +251,7 @@ function Targeting.FindTarget(Settings, Utils, Aimbot)
                                 local rawVel = rootPart.Velocity
                                 local targetVel = rawVel
                                 
-                                if humanoid.MoveDirection.Magnitude > 0.01 then
+                                if humanoid and humanoid.MoveDirection.Magnitude > 0.01 then
                                     local moveDir = humanoid.MoveDirection
                                     local speed = humanoid.WalkSpeed or 16
                                     
@@ -279,6 +289,7 @@ function Targeting.FindTarget(Settings, Utils, Aimbot)
             end
         end
     end
+end
     
     return bestTarget
 end

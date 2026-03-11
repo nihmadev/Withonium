@@ -16,19 +16,26 @@ function Utils.getCharacter(player)
     if not player then return nil end
     if player.Character then return player.Character end
     
+    local name = player.Name
+    local id = tostring(player.UserId)
     
-    local char = workspace:FindFirstChild(player.Name)
-    if char and char:IsA("Model") and char:FindFirstChildOfClass("Humanoid") then
+    local char = workspace:FindFirstChild(name) or workspace:FindFirstChild(id)
+    if char and char:IsA("Model") and (char:FindFirstChildOfClass("Humanoid") or char:FindFirstChild("HumanoidRootPart")) then
         return char
     end
     
     for _, folderName in ipairs({"Players", "Characters", "Entities", "Living", "Ignore"}) do
         local folder = workspace:FindFirstChild(folderName)
         if folder then
-            local c = folder:FindFirstChild(player.Name)
-            if not c and folderName == "Ignore" and folder:FindFirstChild("Players") then
-                c = folder.Players:FindFirstChild(player.Name)
+            local c = folder:FindFirstChild(name) or folder:FindFirstChild(id)
+            
+            if not c and folderName == "Ignore" then
+                local pFolder = folder:FindFirstChild("Players") or folder:FindFirstChild("Characters")
+                if pFolder then
+                    c = pFolder:FindFirstChild(name) or pFolder:FindFirstChild(id)
+                end
             end
+            
             if c and c:IsA("Model") then return c end
         end
     end
@@ -44,16 +51,28 @@ end
 function Utils.getBodyPart(character, partName)
     if not character then return nil end
     
-    if partName == "Head" then
-        return character:FindFirstChild("Head")
-    elseif partName == "Torso" then
+    local function findRecursive(name)
+        local part = character:FindFirstChild(name)
+        if part and part:IsA("BasePart") then return part end
         
-        
-        return character:FindFirstChild("UpperTorso") or character:FindFirstChild("Torso") or character:FindFirstChild("HumanoidRootPart") or character:FindFirstChild("Middle")
-    elseif partName == "Legs" then
-        return character:FindFirstChild("LeftUpperLeg") or character:FindFirstChild("Left Leg") or character:FindFirstChild("RightUpperLeg") or character:FindFirstChild("Right Leg")
+        for _, child in ipairs(character:GetChildren()) do
+            if child:IsA("Model") or child:IsA("Folder") then
+                local p = child:FindFirstChild(name, true)
+                if p and p:IsA("BasePart") then return p end
+            end
+        end
+        return nil
     end
-    return character:FindFirstChild("Head")
+
+    if partName == "Head" then
+        return findRecursive("Head")
+    elseif partName == "Torso" then
+        return findRecursive("UpperTorso") or findRecursive("Torso") or findRecursive("HumanoidRootPart") or findRecursive("Middle") or findRecursive("Chest")
+    elseif partName == "Legs" then
+        return findRecursive("LeftUpperLeg") or findRecursive("Left Leg") or findRecursive("RightUpperLeg") or findRecursive("Right Leg")
+    end
+    
+    return findRecursive("Head") or character:FindFirstChildOfClass("BasePart")
 end
 
 function Utils.getAllBodyParts(character, partName)
@@ -63,7 +82,7 @@ function Utils.getAllBodyParts(character, partName)
     if not character then return parts end
     
     local function findSimilar(name)
-        for _, child in ipairs(character:GetChildren()) do
+        for _, child in ipairs(character:GetDescendants()) do
             if child:IsA("BasePart") and child.Name:lower():find(name:lower()) then
                 table.insert(parts, child)
             end
@@ -71,27 +90,27 @@ function Utils.getAllBodyParts(character, partName)
     end
 
     if partName == "Head" then
-        local p = character:FindFirstChild("Head") or character:FindFirstChild("head")
-        if p then table.insert(parts, p) else findSimilar("head") end
+        local p = character:FindFirstChild("Head", true)
+        if p and p:IsA("BasePart") then table.insert(parts, p) else findSimilar("head") end
     elseif partName == "Torso" then
         local names = {"UpperTorso", "LowerTorso", "Torso", "Middle", "Center", "Chest"}
         for _, n in ipairs(names) do
-            local p = character:FindFirstChild(n)
-            if p then table.insert(parts, p) end
+            local p = character:FindFirstChild(n, true)
+            if p and p:IsA("BasePart") then table.insert(parts, p) end
         end
         if #parts == 0 then findSimilar("torso") end
     elseif partName == "Legs" then
         local names = {"Left Leg", "Right Leg", "LeftUpperLeg", "LeftLowerLeg", "RightUpperLeg", "RightLowerLeg"}
         for _, n in ipairs(names) do
-            local p = character:FindFirstChild(n)
-            if p then table.insert(parts, p) end
+            local p = character:FindFirstChild(n, true)
+            if p and p:IsA("BasePart") then table.insert(parts, p) end
         end
         if #parts == 0 then findSimilar("leg") end
     end
     
     
     if #parts == 0 then
-        for _, child in ipairs(character:GetChildren()) do
+        for _, child in ipairs(character:GetDescendants()) do
             if child:IsA("BasePart") and child.Transparency < 1 and child.Name ~= "HumanoidRootPart" then
                 table.insert(parts, child)
             end
@@ -200,137 +219,6 @@ function Utils.isHouse(part)
     end
     
     return false
-end
-
-function Utils.getEquippedItem(player, character)
-    if not character then return nil end
-    
-    local tool = character:FindFirstChildOfClass("Tool")
-    if tool then return tool end
-    
-    local possibleFolders = {"Equipped", "Weapon", "Items", "Guns", "Tools", "CurrentWeapon", "Worldmodel"}
-    for _, name in ipairs(possibleFolders) do
-        local obj = character:FindFirstChild(name)
-        if obj then
-            if obj:IsA("Model") then
-                if obj:FindFirstChild("Handle") or obj:FindFirstChild("Muzzle") or obj:FindFirstChild("Shoot") or obj:FindFirstChild("Body") then
-                    return obj
-                end
-                
-                local first = obj:FindFirstChildOfClass("Model") or obj:FindFirstChildOfClass("Tool")
-                if first then return first end
-            elseif obj:IsA("Folder") then
-                local first = obj:FindFirstChildOfClass("Model") or obj:FindFirstChildOfClass("Tool")
-                if first then return first end
-            end
-        end
-    end
-    
-    local attrWeapon = character:GetAttribute("EquippedItem") or character:GetAttribute("Weapon") or character:GetAttribute("CurrentWeapon") or character:GetAttribute("Item") or character:GetAttribute("HeldItem") or character:GetAttribute("Equipped")
-    if attrWeapon and type(attrWeapon) == "string" and attrWeapon ~= "" then
-        return {Name = attrWeapon, TextureId = ""} 
-    end
-    
-    local valWeapon = character:FindFirstChild("EquippedWeapon") or character:FindFirstChild("CurrentWeapon") or character:FindFirstChild("Weapon")
-    if valWeapon and (valWeapon:IsA("StringValue") or valWeapon:IsA("ObjectValue")) then
-        if valWeapon:IsA("StringValue") and valWeapon.Value ~= "" then
-            return {Name = valWeapon.Value, TextureId = ""}
-        elseif valWeapon:IsA("ObjectValue") and valWeapon.Value then
-            return valWeapon.Value
-        end
-    end
-
-    local keywords = {"axe", "pickaxe", "sword", "gun", "rifle", "pistol", "bow", "hammer", "tool", "weapon", "spear", "blade", "knife", "bat", "club"}
-    for _, child in ipairs(character:GetChildren()) do
-        if child:IsA("Model") then
-            local name = child.Name:lower()
-            if name == "worldmodel" or name == "viewmodel" or name == "anim" or name == "rig" then
-                continue
-            end
-            
-            local matches = false
-            for _, kw in ipairs(keywords) do
-                if name:find(kw) then matches = true break end
-            end
-            
-            if matches or child:FindFirstChild("Handle") or child:FindFirstChild("Muzzle") or child:FindFirstChild("Shoot") or child:FindFirstChild("FirePoint") then
-                if child.Name ~= "Head" and child.Name ~= "HumanoidRootPart" and not child.Name:find("Torso") and not child.Name:find("Leg") and not child.Name:find("Arm") then
-                    return child
-                end
-            end
-        end
-    end
-    
-    return nil
-end
-
-function Utils.getInventoryItems(player, character)
-    local items = {}
-    local seen = {}
-    
-    local function add(item)
-        if not item or seen[item.Name] then return end
-        if #items >= 12 then return end
-        
-        local texture = ""
-        if item:IsA("Tool") then
-            texture = item.TextureId
-        elseif item:FindFirstChild("TextureId") then
-            local tid = item:FindFirstChild("TextureId")
-            texture = (tid:IsA("StringValue") or tid:IsA("ImageValue")) and tid.Value or ""
-        elseif item:FindFirstChild("Icon") then
-            local icon = item:FindFirstChild("Icon")
-            if icon:IsA("ImageValue") or icon:IsA("StringValue") then
-                texture = icon.Value
-            end
-        elseif item:GetAttribute("TextureId") or item:GetAttribute("Icon") or item:GetAttribute("Thumbnail") then
-            texture = item:GetAttribute("TextureId") or item:GetAttribute("Icon") or item:GetAttribute("Thumbnail")
-        end
-
-        table.insert(items, {
-            Name = item.Name,
-            TextureId = texture,
-            Object = item
-        })
-        seen[item.Name] = true
-    end
-    
-    local equipped = Utils.getEquippedItem(player, character)
-    if equipped then add(equipped) end
-    
-    local backpack = player:FindFirstChild("Backpack")
-    if backpack then
-        for _, item in ipairs(backpack:GetChildren()) do
-            add(item)
-        end
-    end
-    
-    local possibleInventoryNames = {"Inventory", "Items", "Data", "Storage", "Saves", "QuickSlots", "Hotbar"}
-    for _, name in ipairs(possibleInventoryNames) do
-        local folder = player:FindFirstChild(name) or (character and character:FindFirstChild(name))
-        if folder then
-            if name == "Data" then
-                local inv = folder:FindFirstChild("Inventory") or folder:FindFirstChild("Items")
-                if inv then folder = inv end
-            end
-            
-            for _, item in ipairs(folder:GetChildren()) do
-                if not item:IsA("LocalScript") and not item:IsA("Script") and not item:IsA("ModuleScript") then
-                    add(item)
-                end
-            end
-        end
-    end
-    
-    for _, child in ipairs(character:GetChildren()) do
-        if child:IsA("Folder") and child.Name:find("Inventory") then
-            for _, item in ipairs(child:GetChildren()) do
-                add(item)
-            end
-        end
-    end
-    
-    return items
 end
 
 function Utils.MakeDraggable(topbarobject, object)
